@@ -1,0 +1,82 @@
+<div class="links-editor-wrapper">
+
+  {{!-- Toolbar --}}
+  <div class="links-toolbar">
+    <button type="button" class="links-btn-config" title="Set background image">
+      <i class="fas fa-image"></i> Background
+    </button>
+    <button type="button" class="links-btn-auto-layout" title="Auto-arrange nodes in a grid">
+      <i class="fas fa-th"></i> Auto Layout
+    </button>
+    <span class="links-toolbar-hint">
+      Drag nodes to move • Click an anchor ● on a node border to start a connection, click another anchor to finish • Right-click a line to remove
+    </span>
+    <button type="button" class="links-btn-show-players" title="Show this diagram to all players">
+      <i class="fas fa-eye"></i> Show Players
+    </button>
+  </div>
+
+  {{!-- SVG Canvas --}}
+  <svg class="links-svg" xmlns="http://www.w3.org/2000/svg">
+
+    {{!-- Background image layer (toggled by JS after render) --}}
+    {{#if backgroundImage}}
+    <image class="links-bg-image" href="{{backgroundImage}}"
+           x="0" y="0" preserveAspectRatio="xMidYMid meet"/>
+    {{/if}}
+
+    {{!-- Connection lines — rendered below nodes --}}
+    <g class="links-layer"></g>
+
+    {{!-- Nodes --}}
+    <g class="nodes-layer">
+      {{#each nodes}}
+      <g class="node" data-part-id="{{this.partId}}"
+         transform="translate({{this.x}},{{this.y}})">
+
+        {{!-- Node background, amber border if broken --}}
+        <rect class="node-bg{{#if (eq this.status 'broken')}} node-bg--broken{{/if}}" x="0" y="0" width="80" height="80" rx="6"/>
+
+        {{!-- Actor portrait --}}
+        <image href="{{this.actorImg}}"
+               x="4" y="4" width="72" height="72"
+               preserveAspectRatio="xMidYMid meet"
+               style="pointer-events:none;"/>
+
+        {{!-- HP pip bar — read-only, always visible in editor --}}
+        {{#if ../showHpBar}}
+          {{#each this.hpPips}}
+          <rect class="node-hp-pip {{#if this.filled}}node-hp-pip--filled{{/if}}"
+                x="{{this.x}}" y="2" width="{{this.width}}" height="5" rx="1"
+                style="pointer-events:none;"/>
+          {{/each}}
+        {{/if}}
+
+        {{!-- Destroyed: red X overlay drawn on top of the image --}}
+        {{#if (eq this.status 'destroyed')}}
+        <line class="node-destroyed-x" x1="10" y1="10" x2="70" y2="70"/>
+        <line class="node-destroyed-x" x1="70" y1="10" x2="10" y2="70"/>
+        {{/if}}
+
+        <text class="node-label" x="40" y="97" text-anchor="middle">{{this.actorName}}</text>
+
+        {{!-- 4 directional anchors (hidden until node hover, shown via CSS) --}}
+        <circle class="link-anchor" data-part-id="{{this.partId}}" data-side="top"
+                cx="40" cy="0"  r="7" title="Connect from top"/>
+        <circle class="link-anchor" data-part-id="{{this.partId}}" data-side="right"
+                cx="80" cy="40" r="7" title="Connect from right"/>
+        <circle class="link-anchor" data-part-id="{{this.partId}}" data-side="bottom"
+                cx="40" cy="80" r="7" title="Connect from bottom"/>
+        <circle class="link-anchor" data-part-id="{{this.partId}}" data-side="left"
+                cx="0"  cy="40" r="7" title="Connect from left"/>
+      </g>
+      {{/each}}
+    </g>
+
+    {{!-- Temporary line shown while drawing a new connection --}}
+    <line class="temp-link" id="temp-link-line"
+          x1="0" y1="0" x2="0" y2="0" style="display:none"/>
+
+  </svg>
+
+</div>

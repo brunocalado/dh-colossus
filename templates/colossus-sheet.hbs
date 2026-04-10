@@ -1,0 +1,248 @@
+{{#if colossus}}
+<section class="colossus-sheet-content">
+
+  {{!-- Principal Drop Zone / Principal Row --}}
+  {{#if principal}}
+  {{!-- Principal is set: render it as a highlighted row --}}
+  <div class="principal-row">
+    <div class="principal-row__main">
+      <img src="{{principal.actorImg}}" alt="{{principal.actorName}}"
+           width="32" height="32"
+           data-action="viewActorImage"
+           data-uuid="{{principal.actorUuid}}"
+           title="View image" />
+      <a class="actor-link principal-name" data-action="openActorSheet" data-uuid="{{principal.actorUuid}}">
+        {{principal.actorName}}
+      </a>
+      <div class="principal-features-btn">
+        {{#if principal.features.length}}
+        <button type="button" data-action="toggleFeatures" title="View Features" data-principal="true">
+          <i class="fas fa-list"></i> ({{principal.features.length}})
+        </button>
+        {{else}}
+        <span class="no-features">—</span>
+        {{/if}}
+      </div>
+      {{!-- Experiences tooltip button --}}
+      {{#if principal.experiences.length}}
+      <div class="principal-exp-wrapper">
+        <button type="button" class="colossus-icon-btn principal-exp-btn" tabindex="0" aria-label="Experiences">
+          <i class="fas fa-star"></i>
+        </button>
+        <div class="principal-exp-tooltip" role="tooltip">
+          <ul class="exp-list">
+            {{#each principal.experiences}}
+            <li class="exp-item">
+              <span class="exp-name">{{this.name}}</span>
+              <span class="exp-value">+{{this.value}}</span>
+            </li>
+            {{/each}}
+          </ul>
+        </div>
+      </div>
+      {{/if}}
+      <div class="action-buttons principal-actions">
+        <button type="button" class="colossus-icon-btn drag-to-scene-btn"
+                data-uuid="{{principal.actorUuid}}"
+                draggable="true"
+                title="Drag to scene to place all Colossus tokens (principal + all parts)">
+          <i class="fas fa-hand-paper"></i>
+        </button>
+        <button type="button" class="colossus-icon-btn" data-action="locateToken" data-uuid="{{principal.actorUuid}}" title="Locate token on scene">
+          <i class="fas fa-search"></i>
+        </button>
+        {{#if @root.isGM}}
+        <button type="button" class="colossus-icon-btn" data-action="openLinksEditor" title="Edit part connections">
+          <i class="fas fa-project-diagram"></i>
+        </button>
+        {{/if}}
+        <button type="button" class="colossus-icon-btn" data-action="removePrincipal" title="Remove principal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+    {{!-- Stress pips only for principal --}}
+    <div class="principal-row__pips">
+      <div class="pip-group">
+        <span class="pip-label">Stress</span>
+        <span class="pip-value">{{principal.stress.value}} / {{principal.stress.max}}</span>
+        <div class="pip-track pip-track--stress" data-uuid="{{principal.actorUuid}}" data-stat="stress">
+          {{#each principal.stress.pips}}
+          <button type="button"
+                  class="pip {{#if this.filled}}filled{{/if}}"
+                  data-index="{{this.index}}"
+                  data-action="setPip"
+                  title="Set Stress to {{this.index}}">
+          </button>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+    {{!-- Features inline (hidden by default) --}}
+    {{#if principal.features.length}}
+    <div class="principal-features-row" style="display:none;">
+      <ul class="features-list">
+        {{#each principal.features}}
+        <li class="feature-item">
+          <img src="{{this.img}}" alt="" width="20" height="20" />
+          <span class="feature-inline">
+            <strong class="feature-name">{{this.name}}{{#if this.featureForm}} ({{this.featureForm}}){{/if}}:</strong>
+            <span class="feature-description">{{{this.description}}}</span>
+          </span>
+        </li>
+        {{/each}}
+      </ul>
+    </div>
+    {{/if}}
+  </div>
+  {{else}}
+  {{!-- No principal yet: show the dedicated drop zone --}}
+  <div class="principal-drop-zone">
+    <p><i class="fas fa-star"></i> Drop the main actor here as the principal</p>
+  </div>
+  {{/if}}
+
+  {{!-- Parts Table --}}
+  {{#if parts.length}}
+  <div class="parts-table-wrapper">
+  <table class="parts-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Actor</th>
+        <th class="attack-col">Attack</th>
+        <th>Difficulty</th>
+        <th>Damage Thresholds</th>
+        <th class="features-col">Features</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each parts}}
+      <tr class="part-row part-row--{{this.status}}" data-part-id="{{this.partId}}">
+        <td>
+          <img src="{{this.actorImg}}" alt="{{this.actorName}}"
+               width="32" height="32"
+               data-action="viewActorImage"
+               data-uuid="{{this.actorUuid}}"
+               title="View image" />
+        </td>
+        <td>
+          <a class="actor-link" data-action="openActorSheet" data-uuid="{{this.actorUuid}}">
+            {{this.actorName}}
+          </a>
+        </td>
+        <td class="attack-cell">{{this.attackBonus}}</td>
+        <td class="difficulty-cell">{{this.difficulty}}</td>
+        <td class="thresholds-cell">
+          Minor {{this.damageThresholds.major}} Major {{this.damageThresholds.severe}} Severe
+          {{#if this.damageThresholds.massive}}
+          {{this.damageThresholds.massive}} Massive
+          {{/if}}
+        </td>
+        <td class="features-cell">
+          {{#if this.features.length}}
+          <button type="button" data-action="toggleFeatures" title="View Features">
+            <i class="fas fa-list"></i> ({{this.features.length}})
+          </button>
+          {{else}}
+          <span class="no-features">—</span>
+          {{/if}}
+        </td>
+        <td class="actions-cell">
+          <div class="action-buttons">
+            <button type="button" class="colossus-icon-btn drag-to-scene-btn"
+                    data-uuid="{{this.actorUuid}}"
+                    draggable="true"
+                    title="Drag to scene to place token">
+              <i class="fas fa-hand-paper"></i>
+            </button>
+            <button type="button" class="colossus-icon-btn" data-action="locateToken" data-uuid="{{this.actorUuid}}" title="Locate token on scene">
+              <i class="fas fa-search"></i>
+            </button>
+            <button type="button" class="colossus-icon-btn" data-action="removePart" data-part-id="{{this.partId}}" title="Remove part">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+
+      {{!-- HP pips only (no stress) for parts --}}
+      <tr class="pips-row pips-row--{{this.status}}" data-part-id="{{this.partId}}">
+        <td colspan="7">
+          <div class="pips-and-type-row">
+            <div class="pips-container">
+              <div class="pip-group">
+                <span class="pip-label">HP</span>
+                <span class="pip-value">{{this.hp.value}} / {{this.hp.max}}</span>
+                <div class="pip-track pip-track--hp" data-uuid="{{this.actorUuid}}" data-stat="hp">
+                  {{#each this.hp.pips}}
+                  <button type="button"
+                          class="pip {{#if this.filled}}filled{{/if}}"
+                          data-index="{{this.index}}"
+                          data-action="setPip"
+                          title="Set HP to {{this.index}}">
+                  </button>
+                  {{/each}}
+                </div>
+              </div>
+            </div>
+            <div class="part-status-wrapper">
+              <select class="part-status-select" data-part-id="{{this.partId}}">
+                <option value="healthy" {{#if (eq this.status "healthy")}}selected{{/if}}>Healthy</option>
+                <option value="broken" {{#if (eq this.status "broken")}}selected{{/if}}>Broken</option>
+                <option value="destroyed" {{#if (eq this.status "destroyed")}}selected{{/if}}>Destroyed</option>
+              </select>
+            </div>
+            <div class="part-type-wrapper">
+              <select class="part-type-select" data-part-id="{{this.partId}}">
+                {{#each ../partTypes}}
+                <option value="{{this.id}}" {{#if (eq this.id ../partTypeId)}}selected{{/if}}>
+                  {{this.label}}
+                </option>
+                {{/each}}
+              </select>
+            </div>
+          </div>
+        </td>
+      </tr>
+
+      {{#if this.features.length}}
+      <tr class="features-row" data-part-id="{{this.partId}}">
+        <td colspan="7">
+          <ul class="features-list">
+            {{#each this.features}}
+            <li class="feature-item">
+              <img src="{{this.img}}" alt="" width="20" height="20" />
+              <span class="feature-inline">
+                <strong class="feature-name">{{this.name}}{{#if this.featureForm}} ({{this.featureForm}}){{/if}}:</strong>
+                <span class="feature-description">{{{this.description}}}</span>
+              </span>
+            </li>
+            {{/each}}
+          </ul>
+        </td>
+      </tr>
+      {{/if}}
+
+      {{/each}}
+    </tbody>
+  </table>
+  </div>
+  {{/if}}
+
+  {{!-- Parts Drop Zone --}}
+  {{#if principal}}
+  <div class="parts-drop-zone">
+    <p><i class="fas fa-download"></i> Drop an Actor here to add as a part</p>
+  </div>
+  {{else}}
+  <div class="parts-drop-zone parts-drop-zone--disabled">
+    <p><i class="fas fa-lock"></i> Set a principal first before adding parts</p>
+  </div>
+  {{/if}}
+
+</section>
+{{else}}
+<p class="error-state">Colossus not found.</p>
+{{/if}}

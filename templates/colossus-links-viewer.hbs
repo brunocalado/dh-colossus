@@ -1,0 +1,31 @@
+<div class="links-viewer-wrapper">
+  <svg class="links-svg" xmlns="http://www.w3.org/2000/svg">
+    {{#if backgroundImage}}
+    <image class="links-bg-image" href="{{backgroundImage}}"
+           x="0" y="0" preserveAspectRatio="xMidYMid meet"/>
+    {{/if}}
+    <g class="links-layer"></g>
+    <g class="nodes-layer">
+      {{#each nodes}}
+      <g class="node node--readonly" data-part-id="{{this.partId}}"
+         transform="translate({{this.x}},{{this.y}})">
+        <rect class="node-bg{{#if (eq this.status 'broken')}} node-bg--broken{{/if}}" x="0" y="0" width="80" height="80" rx="6"/>
+        <image href="{{this.actorImg}}"
+               x="4" y="4" width="72" height="72"
+               preserveAspectRatio="xMidYMid meet"/>
+        {{#if ../showHpBar}}
+          {{#each this.hpPips}}
+          <rect class="node-hp-pip {{#if this.filled}}node-hp-pip--filled{{/if}}"
+                x="{{this.x}}" y="2" width="{{this.width}}" height="5" rx="1"/>
+          {{/each}}
+        {{/if}}
+        {{#if (eq this.status 'destroyed')}}
+        <line class="node-destroyed-x" x1="10" y1="10" x2="70" y2="70"/>
+        <line class="node-destroyed-x" x1="70" y1="10" x2="10" y2="70"/>
+        {{/if}}
+        <text class="node-label" x="40" y="97" text-anchor="middle">{{this.actorName}}</text>
+      </g>
+      {{/each}}
+    </g>
+  </svg>
+</div>

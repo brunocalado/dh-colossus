@@ -1,0 +1,911 @@
+/* ---------------------------------------- */
+/*  Design Tokens                           */
+/* ---------------------------------------- */
+
+.colossus-sheet,
+#colossus-manager,
+.colossus-links {
+  --colossus-gold: #e8c84a;
+  --colossus-gold-light: #ffd95e;
+  --colossus-gold-border: rgba(232, 200, 74, 0.4);
+  --colossus-hp: #c0392b;
+  --colossus-hp-light: #e74c3c;
+  --colossus-stress: #27ae60;
+  --colossus-stress-light: #2ecc71;
+  --colossus-bg-dark: #1a1a1e;
+  --colossus-bg-card: #2a2a30;
+  --colossus-bg-overlay: rgba(0, 0, 0, 0.15);
+  --colossus-text: #ffffff;
+  --colossus-text-muted: #d4d0c8;
+  --colossus-link-color: #7ab3ff;
+  --colossus-link-hover: #ff6b6b;
+  --colossus-link-temp: #ffd86e;
+}
+
+/* ---------------------------------------- */
+/*  Shared Utility: Icon Button             */
+/*  26px square button used for inline      */
+/*  action icons throughout the module      */
+/* ---------------------------------------- */
+
+.colossus-icon-btn {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ---------------------------------------- */
+/*  Colossus Manager                        */
+/* ---------------------------------------- */
+
+#colossus-manager .manager-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+#colossus-manager .colossus-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#colossus-manager .colossus-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.25rem;
+  border-bottom: 1px solid var(--color-border-light-tertiary, #ccc);
+}
+
+#colossus-manager .colossus-entry img {
+  border: none;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+#colossus-manager .colossus-name {
+  flex: 1;
+  font-weight: bold;
+}
+
+#colossus-manager .colossus-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+#colossus-manager .empty-state {
+  text-align: center;
+  opacity: 0.6;
+  padding: 2rem 0;
+}
+
+/* ---------------------------------------- */
+/*  Colossus Sheet                          */
+/* ---------------------------------------- */
+
+/*
+  Make the sheet content fill the window-content area and scroll as a
+  whole. This is the correct approach for Foundry ApplicationV2 sheets:
+  the .window-content already has overflow:auto, so we just need the
+  inner wrapper to fill it with a flex column.
+*/
+.colossus-sheet .window-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+.colossus-sheet-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+/* ---------------------------------------- */
+/*  Principal Drop Zone                     */
+/* ---------------------------------------- */
+
+.colossus-sheet .principal-drop-zone {
+  border: 2px dashed var(--color-border-highlight, #9a7a2a);
+  border-radius: 6px;
+  padding: 1rem;
+  text-align: center;
+  opacity: 0.75;
+  margin-bottom: 0.75rem;
+  background: rgba(255, 200, 50, 0.04);
+}
+
+.colossus-sheet .principal-drop-zone:hover {
+  opacity: 1;
+  border-color: var(--color-border-highlight, #c8a83a);
+}
+
+/* ---------------------------------------- */
+/*  Principal Row                           */
+/* ---------------------------------------- */
+
+.colossus-sheet .principal-row {
+  border: 2px solid var(--color-border-highlight, #9a7a2a);
+  border-radius: 6px;
+  background: rgba(255, 200, 50, 0.06);
+  padding: 6px 8px;
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  /* Do not grow: stays at its natural height */
+  flex-shrink: 0;
+}
+
+.colossus-sheet .principal-row__main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.colossus-sheet .principal-row__main img {
+  border: 2px solid transparent;
+  border-radius: 3px;
+  object-fit: cover;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+
+.colossus-sheet .principal-row__main img:hover {
+  border-color: var(--color-text-hyperlink);
+}
+
+.colossus-sheet .principal-name {
+  flex: 1;
+  font-weight: bold;
+  font-size: 0.95em;
+  cursor: pointer;
+  color: var(--colossus-text);
+  text-decoration: none;
+}
+
+.colossus-sheet .principal-name:hover {
+  text-decoration: underline;
+}
+
+.colossus-sheet .principal-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.colossus-sheet .principal-row__pips {
+  padding: 4px 8px 2px;
+  background: var(--colossus-bg-overlay);
+  border-radius: 4px;
+}
+
+.colossus-sheet .principal-features-row {
+  padding: 4px 0 0;
+  /* Caps visible height so long feature lists scroll instead of stretching the sheet */
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ---------------------------------------- */
+/*  Experiences Tooltip                     */
+/* ---------------------------------------- */
+
+.colossus-sheet .principal-exp-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.colossus-sheet .principal-exp-btn {
+  color: var(--colossus-gold);
+  opacity: 0.85;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.colossus-sheet .principal-exp-btn:hover {
+  opacity: 1;
+  color: var(--colossus-gold-light);
+}
+
+/* Tooltip: hidden by default, shown on hover/focus-within */
+.colossus-sheet .principal-exp-tooltip {
+  display: none;
+  position: absolute;
+  /* Anchor just below the button */
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  min-width: 160px;
+  max-width: 240px;
+  background: #1e1c18;
+  border: 1px solid var(--colossus-gold-border);
+  border-radius: 5px;
+  padding: 6px 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+/* Small arrow pointing up */
+.colossus-sheet .principal-exp-tooltip::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 0 6px 6px;
+  border-style: solid;
+  border-color: transparent transparent var(--colossus-gold-border) transparent;
+}
+
+.colossus-sheet .principal-exp-wrapper:hover .principal-exp-tooltip,
+.colossus-sheet .principal-exp-wrapper:focus-within .principal-exp-tooltip {
+  display: block;
+}
+
+.colossus-sheet .exp-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.colossus-sheet .exp-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.colossus-sheet .exp-item:last-child {
+  border-bottom: none;
+}
+
+.colossus-sheet .exp-name {
+  font-size: 0.82em;
+  color: var(--colossus-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.colossus-sheet .exp-value {
+  font-size: 0.82em;
+  font-weight: bold;
+  color: var(--colossus-gold);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ---------------------------------------- */
+/*  Parts Table                             */
+/* ---------------------------------------- */
+
+.colossus-sheet .parts-table-wrapper {
+  /*
+    flex: 1 + min-height: 0 lets this section absorb all available vertical
+    space in .colossus-sheet-content (which is itself a flex column that
+    fills the window). overflow-y:auto restores the scroll when content
+    exceeds the available height.
+  */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.colossus-sheet .parts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.colossus-sheet .parts-table th {
+  text-align: center;
+  border-bottom: 2px solid var(--color-border-light-tertiary, #999);
+  padding: 0.25rem 0.35rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  opacity: 0.7;
+  position: sticky;
+  top: 0;
+  background: var(--color-bg-option);
+  z-index: 1;
+}
+
+.colossus-sheet .parts-table td {
+  padding: 0.3rem 0.35rem;
+  vertical-align: middle;
+  text-align: center;
+  border-bottom: 1px solid var(--color-border-light-tertiary, #ddd);
+}
+
+/* Actor column stays left-aligned for readability */
+.colossus-sheet .parts-table td:nth-child(2) {
+  text-align: left;
+}
+
+.colossus-sheet .part-row img {
+  border: none;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.colossus-sheet .part-row img[data-action="viewActorImage"] {
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 3px;
+  transition: border-color 0.15s;
+}
+
+.colossus-sheet .part-row img[data-action="viewActorImage"]:hover {
+  border-color: var(--color-text-hyperlink);
+}
+
+.colossus-sheet .actor-link {
+  cursor: pointer;
+  color: var(--colossus-text);
+  text-decoration: none;
+}
+
+.colossus-sheet .actor-link:hover {
+  text-decoration: underline;
+}
+
+.colossus-sheet .no-features {
+  opacity: 0.4;
+}
+
+/* ---------------------------------------- */
+/*  HP / Stress Pips                        */
+/* ---------------------------------------- */
+
+.colossus-sheet .pips-row td {
+  padding: 4px 8px 6px;
+  background: var(--colossus-bg-overlay);
+}
+
+.colossus-sheet .pips-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.colossus-sheet .pip-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.colossus-sheet .pip-label {
+  font-size: 0.75em;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: var(--color-text-light-6);
+  width: 44px;
+  flex-shrink: 0;
+  text-align: left;
+}
+
+.colossus-sheet .pip-track {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.colossus-sheet .pip {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #888888;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+  flex-shrink: 0;
+}
+
+.colossus-sheet .pip:hover {
+  border-color: var(--colossus-text);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.colossus-sheet .pip-track--hp .pip.filled {
+  background: var(--colossus-hp);
+  border-color: var(--colossus-hp-light);
+}
+
+.colossus-sheet .pip-track--hp .pip.filled:hover {
+  background: var(--colossus-hp-light);
+  border-color: var(--colossus-text);
+}
+
+.colossus-sheet .pip-track--stress .pip.filled {
+  background: var(--colossus-stress);
+  border-color: var(--colossus-stress-light);
+}
+
+.colossus-sheet .pip-track--stress .pip.filled:hover {
+  background: var(--colossus-stress-light);
+  border-color: var(--colossus-text);
+}
+
+.colossus-sheet .pip-value {
+  font-size: 0.8em;
+  color: var(--colossus-text);
+  white-space: nowrap;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* ---------------------------------------- */
+/*  Features Sub-list (collapsible)         */
+/* ---------------------------------------- */
+
+.colossus-sheet tr.features-row {
+  display: none;
+}
+
+.colossus-sheet tr.features-row.expanded {
+  display: table-row;
+}
+
+.colossus-sheet tr.features-row td {
+  text-align: left;
+}
+
+.colossus-sheet .features-list {
+  list-style: none;
+  padding: 0.25rem 0 0.25rem 1rem;
+  margin: 0;
+}
+
+.colossus-sheet .feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--color-border-light-tertiary);
+}
+
+.colossus-sheet .feature-item img {
+  border: none;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.colossus-sheet .feature-inline {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.colossus-sheet .feature-name {
+  margin-right: 4px;
+}
+
+.colossus-sheet .feature-description {
+  font-size: 0.88em;
+  color: var(--color-text-light-6);
+}
+
+/* ---------------------------------------- */
+/*  Inline Action Buttons                   */
+/* ---------------------------------------- */
+
+.colossus-sheet .actions-cell .action-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+}
+
+.colossus-sheet .drag-to-scene-btn {
+  cursor: grab;
+}
+
+.colossus-sheet .drag-to-scene-btn:active {
+  cursor: grabbing;
+}
+
+/* Pips row: pips on the left, Part Type select on the right */
+.colossus-sheet .pips-and-type-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.colossus-sheet .part-type-wrapper {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Fixed width so the select aligns with the table column above */
+.colossus-sheet .part-type-select {
+  width: 160px;
+  flex: 0 0 160px;
+}
+
+/* ---------------------------------------- */
+/*  Features column — fixed width so the    */
+/*  button centres under the FEATURES header */
+/* ---------------------------------------- */
+
+.colossus-sheet .parts-table th.features-col,
+.colossus-sheet .parts-table td.features-cell {
+  /* Matches the "Features" header label width + padding */
+  width: 90px;
+  flex: 0 0 90px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Centre the toggle button inside the cell */
+.colossus-sheet .parts-table td.features-cell > button {
+  display: block;
+  margin: 0 auto;
+}
+
+/* ---------------------------------------- */
+/*  Attack column — narrow, centred         */
+/* ---------------------------------------- */
+
+.colossus-sheet .parts-table th.attack-col,
+.colossus-sheet .parts-table td.attack-cell {
+  /* Just wide enough for "+X" attack bonus values */
+  width: 60px;
+  flex: 0 0 60px;
+  text-align: center;
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------- */
+/*  Part Status Select & Row Tints         */
+/* ---------------------------------------- */
+
+.colossus-sheet .part-status-wrapper {
+  flex-shrink: 0;
+}
+
+/* Fixed width so all status selects align across rows */
+.colossus-sheet .part-status-select {
+  width: 110px;
+  flex: 0 0 110px;
+}
+
+/* Broken: amber tint */
+.colossus-sheet .part-row--broken td {
+  background: rgba(255, 170, 0, 0.12);
+}
+
+.colossus-sheet .pips-row--broken td {
+  background: rgba(255, 170, 0, 0.18);
+}
+
+/* Destroyed: red tint */
+.colossus-sheet .part-row--destroyed td {
+  background: rgba(200, 40, 40, 0.15);
+}
+
+.colossus-sheet .pips-row--destroyed td {
+  background: rgba(200, 40, 40, 0.22);
+}
+
+/* Drop Zone */
+.colossus-sheet .parts-drop-zone {
+  border: 2px dashed var(--color-border-light-tertiary, #aaa);
+  border-radius: 6px;
+  padding: 1rem;
+  text-align: center;
+  opacity: 0.6;
+  margin-top: 0.5rem;
+  /* Do not grow: stays at its natural height */
+  flex-shrink: 0;
+}
+
+.colossus-sheet .parts-drop-zone:hover {
+  opacity: 1;
+  border-color: var(--color-border-highlight, #7a7971);
+}
+
+/* ---------------------------------------- */
+/*  Colossus Links (shared editor/viewer)   */
+/* ---------------------------------------- */
+
+.colossus-links .links-editor-wrapper,
+.colossus-links .links-viewer-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* SVG canvas */
+.colossus-links .links-svg {
+  flex: 1;
+  display: block;
+  background: var(--colossus-bg-dark);
+  cursor: default;
+  overflow: hidden;
+}
+
+/* Node card */
+.colossus-links .node-bg {
+  fill: var(--colossus-bg-card);
+  stroke: #555;
+  stroke-width: 1.5px;
+  cursor: move;
+}
+
+/* Broken: amber border on the node card */
+.colossus-links .node-bg--broken {
+  stroke: #ffaa00;
+  stroke-width: 3px;
+}
+
+/* Destroyed: red X lines over the portrait */
+.colossus-links .node-destroyed-x {
+  stroke: #e03030;
+  stroke-width: 5px;
+  stroke-linecap: round;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.colossus-links-viewer .node--readonly .node-bg {
+  cursor: default;
+}
+
+.colossus-links-editor .node:hover .node-bg {
+  stroke: #aaa;
+}
+
+/* Keep broken border visible even on hover */
+.colossus-links-editor .node:hover .node-bg--broken {
+  stroke: #ffc533;
+}
+
+/* Node label */
+.colossus-links .node-label {
+  font-size: 11px;
+  fill: #ddd;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Connection lines — scoped to prevent cross-module collision */
+.colossus-links .part-link {
+  stroke: var(--colossus-link-color);
+  stroke-width: 2px;
+  stroke-linecap: round;
+  cursor: context-menu;
+  pointer-events: stroke;
+  transition: stroke 0.1s;
+}
+
+.colossus-links .part-link:hover {
+  stroke: var(--colossus-link-hover);
+  stroke-width: 3px;
+}
+
+/* Temporary line while drawing */
+.colossus-links .temp-link {
+  stroke: var(--colossus-link-temp);
+  stroke-width: 2px;
+  stroke-dasharray: 6 4;
+  pointer-events: none;
+}
+
+/* ---------------------------------------- */
+/*  Colossus Links Editor (GM-only)         */
+/* ---------------------------------------- */
+
+.colossus-links-editor .links-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--color-bg-option);
+  border-bottom: 1px solid var(--color-border-light-tertiary);
+  flex-shrink: 0;
+}
+
+.colossus-links-editor .links-toolbar-hint {
+  flex: 1;
+  font-size: 0.75em;
+  opacity: 0.9;
+  color: var(--colossus-text);
+  text-align: center;
+}
+
+.colossus-links-editor .links-btn-show-players {
+  margin-left: auto;
+  color: var(--color-text-hyperlink);
+}
+
+/* Anchors hidden by default; appear when their parent node is hovered */
+.colossus-links-editor .link-anchor {
+  fill: #4a9eff;
+  stroke: var(--colossus-text);
+  stroke-width: 1px;
+  cursor: crosshair;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: all;
+}
+
+/* Show all 4 anchors when hovering the node group */
+.colossus-links-editor .node:hover .link-anchor {
+  opacity: 0.8;
+}
+
+/* Keep anchors visible on all nodes while a connection drag is in progress */
+.colossus-links-editor .links-svg.is-connecting .link-anchor {
+  opacity: 0.8;
+}
+
+/* Individual anchor highlight on direct hover */
+.colossus-links-editor .link-anchor:hover {
+  opacity: 1;
+  fill: #7dcfff;
+  stroke-width: 2px;
+}
+
+/* ---------------------------------------- */
+/*  Node HP Pip Bar (Links Editor/Viewer)   */
+/* ---------------------------------------- */
+
+.colossus-links .node-hp-pip {
+  fill: rgba(255, 255, 255, 0.12);
+  stroke: rgba(255, 255, 255, 0.25);
+  stroke-width: 0.5px;
+  pointer-events: none;
+}
+
+.colossus-links .node-hp-pip--filled {
+  fill: var(--colossus-hp);
+  stroke: var(--colossus-hp-light);
+}
+
+/* ---------------------------------------- */
+/*  Part Type Config                        */
+/* ---------------------------------------- */
+
+#colossus-part-type-config .part-type-list {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+
+#colossus-part-type-config .part-type-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.75rem;
+}
+
+#colossus-part-type-config .part-type-table th {
+  text-align: left;
+  border-bottom: 2px solid var(--color-border-light-tertiary, #999);
+  padding: 0.25rem 0.35rem;
+  font-size: 0.85rem;
+}
+
+#colossus-part-type-config .part-type-table td {
+  padding: 0.3rem 0.35rem;
+  border-bottom: 1px solid var(--color-border-light-tertiary, #ddd);
+}
+
+#colossus-part-type-config .part-type-table input[type="text"] {
+  width: 100%;
+}
+
+#colossus-part-type-config .add-type-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+#colossus-part-type-config .add-type-row input {
+  flex: 1;
+}
+
+#colossus-part-type-config .part-type-table td:last-child {
+  background: transparent;
+  text-align: center;
+}
+
+#colossus-part-type-config .part-type-table button {
+  background: transparent;
+  border: 1px solid var(--color-border-light-tertiary);
+  color: var(--color-text-primary);
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  cursor: pointer;
+}
+
+#colossus-part-type-config .part-type-table button:disabled {
+  opacity: 0.4;
+  cursor: default;
+  border-color: transparent;
+  background: transparent;
+}
+
+#colossus-part-type-config .sheet-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ---------------------------------------- */
+/*  Colossus Token HUD Button              */
+/* ---------------------------------------- */
+
+#token-hud .dh-colossus-hud-btn {
+  cursor: pointer;
+}
+
+#token-hud .dh-colossus-hud-btn i {
+  font-size: 18px;
+}
+
+/* ---------------------------------------- */
+/*  Colossus HUD Dialog                    */
+/* ---------------------------------------- */
+
+.dh-colossus-hud-app .window-content {
+  padding: 8px;
+}
+
+#dh-colossus-hud-root {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dh-colossus-info-banner {
+  text-align: center;
+  padding: 4px;
+  border-bottom: 1px solid var(--color-border-light-tertiary, #ccc);
+  margin-bottom: 4px;
+}
+
+.dh-colossus-hud-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dh-colossus-btn {
+  width: 100%;
+  text-align: left;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.dh-colossus-btn i {
+  margin-right: 6px;
+  width: 14px;
+  text-align: center;
+}

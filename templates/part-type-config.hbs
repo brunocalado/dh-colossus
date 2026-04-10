@@ -1,0 +1,45 @@
+<div class="part-type-config-form">
+
+  <div class="part-type-list">
+    <table class="part-type-table">
+      <thead>
+        <tr>
+          <th>Label</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each partTypes}}
+        <tr>
+          <td>
+            <input type="text" name="label-{{this.id}}" value="{{this.label}}" maxlength="15" />
+          </td>
+          <td>
+            {{#if (includes ../defaults this.id)}}
+              <button type="button" disabled title="Default type cannot be removed">
+                <i class="fas fa-lock"></i>
+              </button>
+            {{else}}
+              <button type="button" data-action="removeType" data-type-id="{{this.id}}" title="Remove">
+                <i class="fas fa-trash"></i>
+              </button>
+            {{/if}}
+          </td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="add-type-row">
+    <input type="text" name="new-type-label" placeholder="New part type..." maxlength="15" />
+    <button type="button" data-action="addType">
+      <i class="fas fa-plus"></i> Add
+    </button>
+  </div>
+
+  <footer class="sheet-footer">
+    <button type="submit"><i class="fas fa-save"></i> Save</button>
+  </footer>
+
+</div>
