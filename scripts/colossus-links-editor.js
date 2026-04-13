@@ -1,5 +1,5 @@
 import { ColossusLinksViewer } from "./colossus-links-viewer.js";
-import { buildHpPips } from "./colossus-utils.js";
+import { buildHpPips, buildStressPips } from "./colossus-utils.js";
 
 /**
  * Returns the SVG absolute coordinates of a named anchor on a node.
@@ -101,10 +101,35 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
       })
       .filter(Boolean);
 
+    // --- Main Actor node ---
+    // The principal actor is tracked in colossus data but not part of the parts array.
+    // It gets a reserved __main__ key in _nodePositions so it can be dragged and persisted.
+    let mainActorNode = null;
+    if (data.principalActorUuid) {
+      const mainActor = fromUuidSync(data.principalActorUuid);
+      if (mainActor) {
+        const MAIN_ACTOR_KEY = "__main__";
+        if (!this._nodePositions[MAIN_ACTOR_KEY]) {
+          // Default position: top-right corner; JS will snap after SVG dimensions are known
+          this._nodePositions[MAIN_ACTOR_KEY] = { x: 780, y: 20 };
+        }
+        const pos = this._nodePositions[MAIN_ACTOR_KEY];
+        mainActorNode = {
+          partId: MAIN_ACTOR_KEY,
+          actorImg: mainActor.img ?? "icons/svg/mystery-man.svg",
+          actorName: mainActor.name,
+          x: pos.x,
+          y: pos.y,
+          stressPips: buildStressPips(mainActor)
+        };
+      }
+    }
+
     return {
       nodes,
+      mainActorNode,
       backgroundImage: data.linksBackgroundImage ?? "",
-      showHpBar: true
+      showStats: true
     };
   }
 
@@ -381,6 +406,9 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
       const toSide   = anchor?.dataset.side ?? "left";
 
       if (toPartId && toPartId !== this._connectingFrom) {
+        // Prevent any link involving the main actor node — it has no anchors by design
+        if (toPartId === "__main__" || this._connectingFrom === "__main__") return;
+
         // Allow multiple links between the same pair IF they use different side combinations
         const exists = this._links.some(
           l => (l.from === this._connectingFrom && l.fromSide === this._connectingFromSide &&

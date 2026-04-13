@@ -44,7 +44,7 @@
                style="pointer-events:none;"/>
 
         {{!-- HP pip bar — read-only, always visible in editor --}}
-        {{#if ../showHpBar}}
+        {{#if ../showStats}}
           {{#each this.hpPips}}
           <rect class="node-hp-pip {{#if this.filled}}node-hp-pip--filled{{/if}}"
                 x="{{this.x}}" y="2" width="{{this.width}}" height="5" rx="1"
@@ -72,6 +72,27 @@
       </g>
       {{/each}}
     </g>
+
+    {{!-- Main Actor node (principal) — no anchors, stress pips only, draggable --}}
+    {{#if mainActorNode}}
+    <g class="node node--main" data-part-id="{{mainActorNode.partId}}"
+       transform="translate({{mainActorNode.x}},{{mainActorNode.y}})">
+      <rect class="node-bg node-bg--main" x="0" y="0" width="80" height="80" rx="6"/>
+      <image href="{{mainActorNode.actorImg}}"
+             x="4" y="4" width="72" height="72"
+             preserveAspectRatio="xMidYMid meet"
+             style="pointer-events:none;"/>
+      {{#if showStats}}
+        {{#each mainActorNode.stressPips}}
+        <rect class="node-stress-pip {{#if this.filled}}node-stress-pip--filled{{/if}}"
+              x="{{this.x}}" y="73" width="{{this.width}}" height="5" rx="1"
+              style="pointer-events:none;"/>
+        {{/each}}
+      {{/if}}
+      <text class="node-label" x="40" y="97" text-anchor="middle">{{mainActorNode.actorName}}</text>
+      {{!-- No .link-anchor circles here — connections to the main actor are intentionally blocked --}}
+    </g>
+    {{/if}}
 
     {{!-- Temporary line shown while drawing a new connection --}}
     <line class="temp-link" id="temp-link-line"

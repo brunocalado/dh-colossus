@@ -1,4 +1,4 @@
-import { buildHpPips } from "./colossus-utils.js";
+import { buildHpPips, buildStressPips } from "./colossus-utils.js";
 
 /**
  * Returns the SVG absolute coordinates of a named anchor on a node.
@@ -83,11 +83,36 @@ export class ColossusLinksViewer extends foundry.applications.api.HandlebarsAppl
       })
       .filter(Boolean);
 
+    // --- Main Actor node ---
+    // The principal actor is tracked in colossus data but not part of the parts array.
+    // Its position is read from nodePositions using the reserved __main__ key.
+    let mainActorNode = null;
+    if (data.principalActorUuid) {
+      const mainActor = fromUuidSync(data.principalActorUuid);
+      if (mainActor) {
+        const MAIN_ACTOR_KEY = "__main__";
+        const pos = (data.nodePositions ?? {})[MAIN_ACTOR_KEY] ?? { x: 780, y: 20 };
+        mainActorNode = {
+          partId: MAIN_ACTOR_KEY,
+          actorImg: mainActor.img ?? "icons/svg/mystery-man.svg",
+          actorName: mainActor.name,
+          x: pos.x,
+          y: pos.y,
+          stressPips: buildStressPips(mainActor)
+        };
+      }
+    }
+
+    const showStats = game.user.isGM || game.settings.get("dh-colossus", "showStatsToPlayers");
+
     return {
       nodes,
+      mainActorNode,
       backgroundImage: data.linksBackgroundImage ?? "",
       links: data.links ?? [],
-      showHpBar: game.user.isGM || game.settings.get("dh-colossus", "showHpBarToPlayers")
+      showStats,
+      // showHpBar alias keeps existing {{#if ../showHpBar}} blocks in the nodes loop working
+      showHpBar: showStats
     };
   }
 

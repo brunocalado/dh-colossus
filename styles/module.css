@@ -790,6 +790,30 @@
 }
 
 /* ---------------------------------------- */
+/*  Main Actor Node                         */
+/* ---------------------------------------- */
+
+/* Gold border distinguishes the principal actor from part nodes */
+.colossus-links .node--main .node-bg--main {
+  stroke: var(--colossus-gold);
+  stroke-width: 3px;
+  fill: var(--colossus-bg-dark);
+}
+
+/* Stress pips (bottom of node, stress colour theme) */
+.colossus-links .node-stress-pip {
+  fill: rgba(39, 174, 96, 0.15);
+  stroke: rgba(46, 204, 113, 0.3);
+  stroke-width: 0.5px;
+  pointer-events: none;
+}
+
+.colossus-links .node-stress-pip--filled {
+  fill: var(--colossus-stress);
+  stroke: var(--colossus-stress-light);
+}
+
+/* ---------------------------------------- */
 /*  Part Type Config                        */
 /* ---------------------------------------- */
 

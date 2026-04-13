@@ -205,9 +205,9 @@ Hooks.once("init", () => {
     default: {}
   });
 
-  game.settings.register(MODULE_ID, "showHpBarToPlayers", {
-    name: "Show HP Bar to Players in Part Links Viewer",
-    hint: "When enabled, non-GM players can see the HP pip bar on each part node in the Colossus Links Viewer.",
+  game.settings.register(MODULE_ID, "showStatsToPlayers", {
+    name: "Show HP and Stress to Players",
+    hint: "When enabled, non-GM players can see the HP pip bar on each part node and the Stress pip bar on the main actor node in the Colossus Links Viewer.",
     scope: "world",
     config: true,
     type: Boolean,

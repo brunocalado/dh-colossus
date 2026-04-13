@@ -27,5 +27,23 @@
       </g>
       {{/each}}
     </g>
+
+    {{!-- Main Actor node (principal) — stress pips only, no anchors, read-only --}}
+    {{#if mainActorNode}}
+    <g class="node node--main node--readonly" data-part-id="{{mainActorNode.partId}}"
+       transform="translate({{mainActorNode.x}},{{mainActorNode.y}})">
+      <rect class="node-bg node-bg--main" x="0" y="0" width="80" height="80" rx="6"/>
+      <image href="{{mainActorNode.actorImg}}"
+             x="4" y="4" width="72" height="72"
+             preserveAspectRatio="xMidYMid meet"/>
+      {{#if showStats}}
+        {{#each mainActorNode.stressPips}}
+        <rect class="node-stress-pip {{#if this.filled}}node-stress-pip--filled{{/if}}"
+              x="{{this.x}}" y="73" width="{{this.width}}" height="5" rx="1"/>
+        {{/each}}
+      {{/if}}
+      <text class="node-label" x="40" y="97" text-anchor="middle">{{mainActorNode.actorName}}</text>
+    </g>
+    {{/if}}
   </svg>
 </div>
