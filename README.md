@@ -38,13 +38,22 @@ To build a Colossus, just drag your adversary actors onto the sheet. No forms to
 **A visual map you can show your players.**
 The Part Links editor lets you draw a diagram of how the Colossus parts connect to each other — arm connects to torso, torso connects to head, and so on. You can upload a background image (like a creature silhouette) and arrange the part cards on top of it. When you're ready, click **Show Players** and every connected player instantly sees the diagram on their screen.
 
+**Gm View**
 <p align="center"><img width="800" src="docs/preview-colossus-parts.webp"></p>
 
+**Player View**
 <p align="center"><img width="800" src="docs/preview-player-view.webp"></p>
+
+**Token HUD**
+<p align="center"><img width="800" src="docs/preview-token-hud.webp"></p>
+
 
 ---
 
-## Macros
+## Access and Macros
+
+**Daggerheart Menu**
+<p align="center"><img width="800" src="docs/preview-dh-menu.webp"></p>
 
 ```js
 Colossus.Manager();
