@@ -1,3 +1,4 @@
+import { MODULE_ID } from "./constants.js";
 import { ColossusSheet } from "./colossus-sheet.js";
 import { ColossusLinksEditor } from "./colossus-links-editor.js";
 import { ColossusLinksViewer } from "./colossus-links-viewer.js";
@@ -10,7 +11,7 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 class ColossusHudDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   static DEFAULT_OPTIONS = {
-    classes: ["dh-colossus-hud-app"],
+    classes: ["dh-colossus", "dh-colossus-hud-app"],
     window: { title: "Colossus Actions" },
     position: { width: 260 },
     actions: {
@@ -42,7 +43,7 @@ class ColossusHudDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * @returns {Promise<object>}
    */
   async _prepareContext() {
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     const colossus = colossi[this.colossusId];
     return {
       colossusName: colossus?.name ?? "Colossus",
@@ -55,7 +56,7 @@ class ColossusHudDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   static #onOpenSheet() {
     const id = this.colossusId;
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     if (!colossi[id]) {
       ui.notifications.warn("Colossus no longer exists.");
       return;
@@ -102,18 +103,17 @@ export class ColossusHud {
    * @param {HTMLElement|jQuery} html
    */
   static _injectHUDButton(app, html) {
-    // v13: html is HTMLElement. Normalise defensively.
-    const root = html instanceof HTMLElement ? html : html[0];
+    const root = html;
     if (!root) return;
 
     const token = app.object ?? app.token;
     if (!token) return;
 
-    const colossusId = token.document?.getFlag("dh-colossus", "colossusId");
+    const colossusId = token.document?.getFlag(MODULE_ID, "colossusId");
     if (!colossusId) return;
 
     // Validate: colossus must still exist in world settings
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     if (!colossi[colossusId]) return;
 
     const colLeft = root.querySelector(".col.left");
@@ -161,11 +161,11 @@ export class ColossusHud {
     if (game.user.isGM) return;
     if (!canvas.tokens) return;
 
-    const colossusId = token.document?.getFlag("dh-colossus", "colossusId");
+    const colossusId = token.document?.getFlag(MODULE_ID, "colossusId");
     const existing = canvas.tokens.children?.find(c => c.__colossusToken === token.id);
 
     // Remove stale icon if flag or colossus no longer valid
-    if (!colossusId || !game.settings.get("dh-colossus", "colossi")[colossusId]) {
+    if (!colossusId || !game.settings.get(MODULE_ID, "colossi")[colossusId]) {
       if (existing) canvas.tokens.removeChild(existing);
       return;
     }

@@ -2,9 +2,7 @@
 /*  Design Tokens                           */
 /* ---------------------------------------- */
 
-.colossus-sheet,
-#colossus-manager,
-.colossus-links {
+.dh-colossus {
   --colossus-gold: #e8c84a;
   --colossus-gold-light: #ffd95e;
   --colossus-gold-border: rgba(232, 200, 74, 0.4);
@@ -28,7 +26,7 @@
 /*  action icons throughout the module      */
 /* ---------------------------------------- */
 
-.colossus-icon-btn {
+.dh-colossus .colossus-icon-btn {
   width: 26px;
   height: 26px;
   padding: 0;
@@ -235,7 +233,7 @@
   z-index: 100;
   min-width: 160px;
   max-width: 240px;
-  background: #1e1c18;
+  background: var(--colossus-bg-dark);
   border: 1px solid var(--colossus-gold-border);
   border-radius: 5px;
   padding: 6px 10px;

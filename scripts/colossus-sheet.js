@@ -1,3 +1,4 @@
+import { MODULE_ID } from "./constants.js";
 import { ColossusLinksEditor } from "./colossus-links-editor.js";
 
 /**
@@ -28,7 +29,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
   static _pendingColossusId = null;
 
   static DEFAULT_OPTIONS = {
-    classes: ["colossus-sheet"],
+    classes: ["dh-colossus", "colossus-sheet"],
     window: { title: "Colossus", icon: "fas fa-dragon", resizable: true },
     position: { width: 800, height: 700 },
     actions: {
@@ -57,11 +58,11 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
    * @returns {Promise<object>}
    */
   async _prepareContext() {
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     const data = colossi[this.colossusId];
     if (!data) return { colossus: null, parts: [], partTypes: [] };
 
-    const partTypes = game.settings.get("dh-colossus", "partTypes");
+    const partTypes = game.settings.get(MODULE_ID, "partTypes");
 
     // Check whether the Massive Damage variant rule is active
     let massiveDamageEnabled = false;
@@ -207,7 +208,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
    * @returns {string[]}
    */
   getPartUuids() {
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     const c = colossi[this.colossusId];
     if (!c) return [];
     const uuids = (c.parts ?? []).map(p => p.actorUuid);
@@ -257,13 +258,13 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
    * @param {string} newStatus - "healthy", "broken", or "destroyed"
    */
   async #autoSetStatus(actorUuid, newStatus) {
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     const colossus = colossi[this.colossusId];
     if (!colossus) return;
     const part = colossus.parts.find(p => p.actorUuid === actorUuid);
     if (!part || part.status === newStatus) return;
     part.status = newStatus;
-    await game.settings.set("dh-colossus", "colossi", colossi);
+    await game.settings.set(MODULE_ID, "colossi", colossi);
     this.#saveScroll();
     this.render({ scroll: true });
   }
@@ -382,7 +383,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
    */
   async _onDrop(event) {
     // Guard: parts cannot be added before a principal is set
-    const colossiCheck = game.settings.get("dh-colossus", "colossi");
+    const colossiCheck = game.settings.get(MODULE_ID, "colossi");
     const colossusCheck = colossiCheck[this.colossusId];
     if (!colossusCheck?.principalActorUuid) {
       ui.notifications.warn("Set a principal first before adding parts to this Colossus.");
@@ -412,7 +413,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
       return;
     }
 
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     const colossus = colossi[this.colossusId];
     if (!colossus) return;
 
@@ -426,7 +427,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
       return;
     }
 
-    const partTypes = game.settings.get("dh-colossus", "partTypes");
+    const partTypes = game.settings.get(MODULE_ID, "partTypes");
     const newPart = {
       partId: foundry.utils.randomID(),
       actorUuid: data.uuid,
@@ -434,7 +435,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
       status: "healthy"
     };
     colossus.parts.push(newPart);
-    await game.settings.set("dh-colossus", "colossi", colossi);
+    await game.settings.set(MODULE_ID, "colossi", colossi);
 
     // Sync the new part's stress.max to match the principal's stress.max
     const principalActor = await fromUuid(colossus.principalActorUuid);
@@ -476,7 +477,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
       return;
     }
 
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     const colossus = colossi[this.colossusId];
     if (!colossus) return;
 
@@ -491,7 +492,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
     if (!colossus.name || colossus.name.startsWith("Colossus ")) {
       colossus.name = actor.name;
     }
-    await game.settings.set("dh-colossus", "colossi", colossi);
+    await game.settings.set(MODULE_ID, "colossi", colossi);
     this.render();
   }
 
@@ -508,12 +509,12 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
   async #handlePartTypeChange(event) {
     const select = event.currentTarget;
     const partId = select.dataset.partId;
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     const colossus = colossi[this.colossusId];
     const part = colossus?.parts.find(p => p.partId === partId);
     if (!part) return;
     part.partTypeId = select.value;
-    await game.settings.set("dh-colossus", "colossi", colossi);
+    await game.settings.set(MODULE_ID, "colossi", colossi);
     this.#saveScroll();
     this.render({ scroll: true });
   }
@@ -526,12 +527,12 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
   async #handlePartStatusChange(event) {
     const select = event.currentTarget;
     const partId = select.dataset.partId;
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     const colossus = colossi[this.colossusId];
     const part = colossus?.parts.find(p => p.partId === partId);
     if (!part) return;
     part.status = select.value;
-    await game.settings.set("dh-colossus", "colossi", colossi);
+    await game.settings.set(MODULE_ID, "colossi", colossi);
     this.#saveScroll();
     this.render({ scroll: true });
   }
@@ -558,7 +559,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
    */
   static async #onRemovePart(event, target) {
     const partId = target.dataset.partId;
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     const colossus = colossi[this.colossusId];
     if (!colossus) return;
 
@@ -574,7 +575,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
     if (!confirmed) return;
 
     colossus.parts = colossus.parts.filter(p => p.partId !== partId);
-    await game.settings.set("dh-colossus", "colossi", colossi);
+    await game.settings.set(MODULE_ID, "colossi", colossi);
     this.render();
   }
 
@@ -610,7 +611,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
    * @param {HTMLElement} target
    */
   static async #onRemovePrincipal(event, target) {
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     const colossus = colossi[this.colossusId];
     if (!colossus) return;
 
@@ -625,7 +626,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
     if (!confirmed) return;
 
     colossus.principalActorUuid = null;
-    await game.settings.set("dh-colossus", "colossi", colossi);
+    await game.settings.set(MODULE_ID, "colossi", colossi);
     this.render();
   }
 

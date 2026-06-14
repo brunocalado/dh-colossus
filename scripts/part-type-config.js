@@ -1,3 +1,5 @@
+import { MODULE_ID, DEFAULT_PART_IDS } from "./constants.js";
+
 /**
  * Configuration UI for managing Colossus part types.
  * Opened via game.settings.registerMenu in the module settings panel.
@@ -7,13 +9,11 @@ export class PartTypeConfig extends foundry.applications.api.HandlebarsApplicati
   foundry.applications.api.ApplicationV2
 ) {
   /** @type {string[]} IDs that ship with the module and cannot be deleted */
-  static DEFAULT_IDS = [
-    "head", "torso", "arm-left", "arm-right", "arms",
-    "leg-left", "leg-right", "legs", "wing-left", "wing-right", "wings", "carapace"
-  ];
+  static DEFAULT_IDS = DEFAULT_PART_IDS;
 
   static DEFAULT_OPTIONS = {
     id: "colossus-part-type-config",
+    classes: ["dh-colossus"],
     tag: "form",
     form: { handler: PartTypeConfig.#onSubmit, submitOnChange: false, closeOnSubmit: true },
     window: { title: "Configure Part Types", icon: "fas fa-puzzle-piece" },
@@ -47,7 +47,7 @@ export class PartTypeConfig extends foundry.applications.api.HandlebarsApplicati
   async _prepareContext(partId) {
     if (!this._pendingTypes) {
       this._pendingTypes = foundry.utils.deepClone(
-        game.settings.get("dh-colossus", "partTypes")
+        game.settings.get(MODULE_ID, "partTypes")
       );
     }
     return {
@@ -102,7 +102,7 @@ export class PartTypeConfig extends foundry.applications.api.HandlebarsApplicati
       const key = `label-${pt.id}`;
       if (key in data) pt.label = data[key];
     }
-    await game.settings.set("dh-colossus", "partTypes", this._pendingTypes);
+    await game.settings.set(MODULE_ID, "partTypes", this._pendingTypes);
     this._pendingTypes = null;
   }
 }

@@ -1,11 +1,10 @@
+import { MODULE_ID, DEFAULT_PART_TYPES } from "./constants.js";
 import { PartTypeConfig } from "./part-type-config.js";
 import { ColossusManager } from "./colossus-manager.js";
 import { ColossusSheet } from "./colossus-sheet.js";
 import { ColossusLinksEditor } from "./colossus-links-editor.js";
 import { ColossusLinksViewer } from "./colossus-links-viewer.js";
 import { ColossusHud } from "./colossus-hud.js";
-
-const MODULE_ID = "dh-colossus";
 
 // Prevents re-entrant stress sync loops when propagating stress.value changes.
 let _syncingStress = false;
@@ -159,25 +158,6 @@ async function _syncStressToColossus(actorDoc, newStressValue) {
 }
 
 /* ---------------------------------------- */
-/*  Default Part Types                      */
-/* ---------------------------------------- */
-
-const DEFAULT_PART_TYPES = [
-  { id: "head",       label: "Head" },
-  { id: "torso",      label: "Torso" },
-  { id: "arm-left",   label: "Left Arm" },
-  { id: "arm-right",  label: "Right Arm" },
-  { id: "arms",       label: "Arms" },
-  { id: "leg-left",   label: "Left Leg" },
-  { id: "leg-right",  label: "Right Leg" },
-  { id: "legs",       label: "Legs" },
-  { id: "wing-left",  label: "Left Wing" },
-  { id: "wing-right", label: "Right Wing" },
-  { id: "wings",      label: "Wings" },
-  { id: "carapace",   label: "Carapace" }
-];
-
-/* ---------------------------------------- */
 /*  Init Hook — Settings & Menus            */
 /* ---------------------------------------- */
 
@@ -257,8 +237,7 @@ Hooks.once("ready", async () => {
         ui.notifications.warn(`No Colossus found with ID: ${id}`);
         return;
       }
-      const existing = Object.values(ui.windows)
-        .find(app => app instanceof ColossusSheet && app.colossusId === id);
+      const existing = foundry.applications.instances.get(`colossus-sheet-${id}`);
       if (existing) return existing.bringToFront();
       new ColossusSheet(id).render(true);
     }
@@ -321,12 +300,12 @@ Hooks.once("ready", async () => {
   Hooks.on("preCreateToken", (tokenDoc, _data, _options, _userId) => {
     const colossusId = ColossusSheet._pendingColossusId;
     if (!colossusId) return;
-    tokenDoc.updateSource({ "flags.dh-colossus.colossusId": colossusId });
+    tokenDoc.updateSource({ [`flags.${MODULE_ID}.colossusId`]: colossusId });
     ColossusSheet._pendingColossusId = null;
   });
 
   // Socket: receive showLinks broadcast from GM → open viewer on player clients
-  game.socket.on("module.dh-colossus", (payload) => {
+  game.socket.on(`module.${MODULE_ID}`, (payload) => {
     if (payload?.action !== "showLinks") return;
     if (game.user.isGM) return;
     ColossusLinksViewer.open(payload.colossusId);

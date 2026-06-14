@@ -1,3 +1,4 @@
+import { MODULE_ID } from "./constants.js";
 import { ColossusSheet } from "./colossus-sheet.js";
 
 /**
@@ -10,6 +11,7 @@ export class ColossusManager extends foundry.applications.api.HandlebarsApplicat
 ) {
   static DEFAULT_OPTIONS = {
     id: "colossus-manager",
+    classes: ["dh-colossus"],
     window: { title: "Colossus Manager", icon: "fas fa-dragon" },
     position: { width: 420, height: 500 },
     actions: {
@@ -34,7 +36,7 @@ export class ColossusManager extends foundry.applications.api.HandlebarsApplicat
    * @returns {Promise<{colossi: object[]}>}
    */
   async _prepareContext() {
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     const entries = Object.values(colossi).map(c => {
       let img = "icons/svg/mystery-man.svg";
       if (c.principalActorUuid) {
@@ -60,9 +62,9 @@ export class ColossusManager extends foundry.applications.api.HandlebarsApplicat
   static async #onCreateColossus(event, target) {
     const id = foundry.utils.randomID();
     const colossus = { id, name: `Colossus ${id.slice(0, 6)}`, principalActorUuid: null, parts: [] };
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     colossi[id] = colossus;
-    await game.settings.set("dh-colossus", "colossi", colossi);
+    await game.settings.set(MODULE_ID, "colossi", colossi);
     this.render();
     new ColossusSheet(id).render(true);
   }
@@ -74,9 +76,7 @@ export class ColossusManager extends foundry.applications.api.HandlebarsApplicat
    */
   static async #onOpenColossus(event, target) {
     const colossusId = target.dataset.colossusId;
-    const existing = Object.values(ui.windows).find(
-      w => w instanceof ColossusSheet && w.colossusId === colossusId
-    );
+    const existing = foundry.applications.instances.get(`colossus-sheet-${colossusId}`);
     if (existing) {
       existing.bringToFront();
       return;
@@ -92,7 +92,7 @@ export class ColossusManager extends foundry.applications.api.HandlebarsApplicat
    */
   static async #onDeleteColossus(event, target) {
     const colossusId = target.dataset.colossusId;
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     const name = colossi[colossusId]?.name ?? "this Colossus";
 
     const confirmed = await foundry.applications.api.DialogV2.confirm({
@@ -102,12 +102,10 @@ export class ColossusManager extends foundry.applications.api.HandlebarsApplicat
     if (!confirmed) return;
 
     delete colossi[colossusId];
-    await game.settings.set("dh-colossus", "colossi", colossi);
+    await game.settings.set(MODULE_ID, "colossi", colossi);
 
     // Close any open sheet for this colossus
-    const openSheet = Object.values(ui.windows).find(
-      w => w instanceof ColossusSheet && w.colossusId === colossusId
-    );
+    const openSheet = foundry.applications.instances.get(`colossus-sheet-${colossusId}`);
     if (openSheet) openSheet.close();
 
     this.render();

@@ -1,3 +1,4 @@
+import { MODULE_ID } from "./constants.js";
 import { ColossusLinksViewer } from "./colossus-links-viewer.js";
 import { buildHpPips, buildStressPips } from "./colossus-utils.js";
 
@@ -57,7 +58,7 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
   get id() { return `colossus-links-editor-${this.colossusId}`; }
 
   static DEFAULT_OPTIONS = {
-    classes: ["colossus-links", "colossus-links-editor"],
+    classes: ["dh-colossus", "colossus-links", "colossus-links-editor"],
     window: { title: "Part Links", icon: "fas fa-project-diagram", resizable: true },
     position: { width: 900, height: 650 },
     actions: {}
@@ -77,7 +78,7 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * @returns {Promise<{ nodes: Array, backgroundImage: string }>}
    */
   async _prepareContext() {
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     const data = colossi[this.colossusId];
     if (!data) return { nodes: [], backgroundImage: "" };
 
@@ -469,7 +470,7 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * @param {SVGSVGElement} svg
    */
   _onAutoLayout(svg) {
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     const parts = colossi[this.colossusId]?.parts ?? [];
     const cols = Math.min(6, Math.ceil(Math.sqrt(parts.length)));
     parts.forEach((part, i) => {
@@ -489,16 +490,17 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * Uses the v13 namespaced API: foundry.applications.apps.FilePicker.
    */
   _onConfigBackground() {
-    new foundry.applications.apps.FilePicker({
+    const FilePickerClass = foundry.applications.apps.FilePicker.implementation ?? foundry.applications.apps.FilePicker;
+    new FilePickerClass({
       type: "image",
       current: (() => {
-        const c = game.settings.get("dh-colossus", "colossi");
+        const c = game.settings.get(MODULE_ID, "colossi");
         return c[this.colossusId]?.linksBackgroundImage ?? "";
       })(),
       callback: async (path) => {
-        const colossi = game.settings.get("dh-colossus", "colossi");
+        const colossi = game.settings.get(MODULE_ID, "colossi");
         colossi[this.colossusId].linksBackgroundImage = path;
-        await game.settings.set("dh-colossus", "colossi", colossi);
+        await game.settings.set(MODULE_ID, "colossi", colossi);
         this.render();
       }
     }).render(true);
@@ -514,10 +516,10 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * The socket listener in main.js already filters out GM clients with `if (game.user.isGM) return`.
    */
   _onShowPlayers() {
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     const data = colossi[this.colossusId];
     if (!data) return;
-    game.socket.emit("module.dh-colossus", {
+    game.socket.emit(`module.${MODULE_ID}`, {
       action: "showLinks",
       colossusId: this.colossusId
     });
@@ -550,12 +552,12 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * @returns {Promise<void>}
    */
   async _persistLayout() {
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     const c = colossi[this.colossusId];
     if (!c) return;
     c.nodePositions = foundry.utils.deepClone(this._nodePositions);
     c.links = foundry.utils.deepClone(this._links);
-    await game.settings.set("dh-colossus", "colossi", colossi);
+    await game.settings.set(MODULE_ID, "colossi", colossi);
   }
 
   /* ------------------------------------------------------------------ */

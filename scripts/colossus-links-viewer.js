@@ -1,3 +1,4 @@
+import { MODULE_ID } from "./constants.js";
 import { buildHpPips, buildStressPips } from "./colossus-utils.js";
 
 /**
@@ -44,7 +45,7 @@ export class ColossusLinksViewer extends foundry.applications.api.HandlebarsAppl
   get id() { return `colossus-links-viewer-${this.colossusId}`; }
 
   static DEFAULT_OPTIONS = {
-    classes: ["colossus-links", "colossus-links-viewer"],
+    classes: ["dh-colossus", "colossus-links", "colossus-links-viewer"],
     window: { title: "Colossus Structure", icon: "fas fa-project-diagram", resizable: true },
     position: { width: 900, height: 650 },
     actions: {}
@@ -60,7 +61,7 @@ export class ColossusLinksViewer extends foundry.applications.api.HandlebarsAppl
    * @returns {Promise<{ nodes: Array, backgroundImage: string, links: Array }>}
    */
   async _prepareContext() {
-    const colossi = game.settings.get("dh-colossus", "colossi");
+    const colossi = game.settings.get(MODULE_ID, "colossi");
     const data = colossi[this.colossusId];
     if (!data) return { nodes: [], backgroundImage: "", links: [] };
 
@@ -103,7 +104,7 @@ export class ColossusLinksViewer extends foundry.applications.api.HandlebarsAppl
       }
     }
 
-    const showStats = game.user.isGM || game.settings.get("dh-colossus", "showStatsToPlayers");
+    const showStats = game.user.isGM || game.settings.get(MODULE_ID, "showStatsToPlayers");
 
     return {
       nodes,
