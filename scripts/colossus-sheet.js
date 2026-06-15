@@ -375,6 +375,29 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
   }
 
   /**
+   * Asks the user whether to enable Link Actor Data on the dropped actor.
+   * If confirmed, updates the prototype token and returns true so the drop can proceed.
+   * If declined, emits the standard unlinked warning and returns false.
+   * @param {Actor} actor
+   * @returns {Promise<boolean>}
+   */
+  static async #promptLinkActor(actor) {
+    const confirmed = await foundry.applications.api.DialogV2.confirm({
+      window: { title: "Unlinked Actor" },
+      content: `<p>"${actor.name}" has <strong>Link Actor Data</strong> disabled on its Prototype Token.</p>
+        <p>Enable it now so this actor can be added to the Colossus?</p>`,
+      yes: { label: "Enable & Add", icon: "fa-solid fa-link" },
+      no:  { label: "Cancel",       icon: "fa-solid fa-xmark" },
+    });
+    if (confirmed) {
+      await actor.update({ "prototypeToken.actorLink": true });
+      return true;
+    }
+    ColossusSheet.#warnUnlinked(actor);
+    return false;
+  }
+
+  /**
    * Handles dropping an Actor onto the parts drop zone.
    * Rejects the drop if no principal has been set yet.
    * Validates that the actor is of type "adversary", is linked, prevents duplicates,
@@ -407,10 +430,9 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
       return;
     }
 
-    // Reject unlinked actors — their data lives on the token, not the world actor
+    // Prompt to enable Link Actor Data if needed — their data lives on the token otherwise
     if (!ColossusSheet.#isLinked(actor)) {
-      ColossusSheet.#warnUnlinked(actor);
-      return;
+      if (!(await ColossusSheet.#promptLinkActor(actor))) return;
     }
 
     const colossi = game.settings.get(MODULE_ID, "colossi");
@@ -471,10 +493,9 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
       return;
     }
 
-    // Reject unlinked actors — their data lives on the token, not the world actor
+    // Prompt to enable Link Actor Data if needed — their data lives on the token otherwise
     if (!ColossusSheet.#isLinked(actor)) {
-      ColossusSheet.#warnUnlinked(actor);
-      return;
+      if (!(await ColossusSheet.#promptLinkActor(actor))) return;
     }
 
     const colossi = game.settings.get(MODULE_ID, "colossi");

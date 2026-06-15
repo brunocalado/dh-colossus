@@ -1,7 +1,7 @@
 {
   "id": "dh-colossus",
   "title": "Daggerheart: Colossus",
-  "version": "0.0.2",
+  "version": "0.0.3",
   
   "description": "Manage Colossus encounters — multi-part boss creatures with independent HP per part, shared stress, and a visual part map you can show your players.",
   

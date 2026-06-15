@@ -1,3 +1,8 @@
+# 0.0.3
+
+## Improvements
+- Dropping an unlinked actor onto the principal or parts zone now shows a dialog offering to enable "Link Actor Data" automatically. Confirming updates the actor's prototype token and proceeds with the drop; declining shows the existing warning and cancels.
+
 # 0.0.2
 
 ## Bug Fixes

@@ -2,6 +2,8 @@
 
 Run **Colossus** encounters in Daggerheart — massive multi-part boss creatures where every limb, wing, and core is its own actor with its own HP and abilities.
 
+<p align="center"><img width="800" src="docs/preview.gif"></p>
+
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Donate-red?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/mestredigital)
 
 ---
@@ -11,8 +13,6 @@ Run **Colossus** encounters in Daggerheart — massive multi-part boss creatures
 Running a Colossus by hand is painful. You have five or six separate actor sheets open at the same time, you lose track of which part is broken, and your players have no idea what they're looking at.
 
 This module solves all of that in one window.
-
-<p align="center"><img width="800" src="docs/preview.gif"></p>
 
 ---
 
@@ -71,7 +71,7 @@ Colossus.Open(); // You must add the ID as arg
 
 Install via the Foundry VTT Module browser or use this manifest link:
 
-```
+```js
 https://raw.githubusercontent.com/brunocalado/dh-colossus/main/module.json
 ```
 
@@ -81,7 +81,7 @@ You can read the full history of changes in the [CHANGELOG](CHANGELOG.md).
 
 ## ⚖️ Credits and License
 
-* **Code License:** GNU GPLv3.
+* **Code License:** [GNU GPLv3](LICENSE.
 
 * **Legal Disclaimer:**  This module is an independent creation and is not an official Darrington Press product. This content is published under the Darrington Press Community Gaming License (DPCGL). The game mechanics contained herein are based on the Daggerheart system. This module does not contain any descriptive text, art, lore, or proprietary narratives from the official Daggerheart core rules or the Colossus of the Drylands campaign frame. All automations and rules implemented serve only as mechanical aids for the Foundry VTT platform. Daggerheart, the Daggerheart logo, and all related characters, names, and logos are trademarks of Darrington Press, LLC.
 
