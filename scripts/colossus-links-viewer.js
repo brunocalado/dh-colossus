@@ -1,4 +1,12 @@
-import { MODULE_ID } from "./constants.js";
+/*!
+ * Daggerheart: Colossus
+ * Copyright (c) 2026 https://github.com/brunocalado
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3.
+ */
+
+import { MODULE_ID, TEMPLATES } from "./constants.js";
 import { buildHpPips, buildStressPips } from "./colossus-utils.js";
 
 /**
@@ -37,22 +45,33 @@ export class ColossusLinksViewer extends foundry.applications.api.HandlebarsAppl
    * @param {object} [options={}]
    */
   constructor(colossusId, options = {}) {
-    super(options);
+    super({ ...options, colossusId });
     this.colossusId = colossusId;
   }
 
-  /** @returns {string} Unique application ID per colossus. */
-  get id() { return `colossus-links-viewer-${this.colossusId}`; }
+  /**
+   * Gives each viewer a stable per-colossus application ID (see ColossusSheet's
+   * `_initializeApplicationOptions` for why this can't be a plain `id` getter override).
+   * @param {object} options
+   * @returns {ApplicationConfiguration}
+   */
+  _initializeApplicationOptions(options) {
+    const applicationOptions = super._initializeApplicationOptions(options);
+    applicationOptions.uniqueId = applicationOptions.colossusId;
+    return applicationOptions;
+  }
 
   static DEFAULT_OPTIONS = {
-    classes: ["dh-colossus", "colossus-links", "colossus-links-viewer"],
+    id: "colossus-links-viewer-{id}",
+    colossusId: null,
+    classes: [MODULE_ID, "colossus-links", "colossus-links-viewer"],
     window: { title: "Colossus Structure", icon: "fas fa-project-diagram", resizable: true },
     position: { width: 900, height: 650 },
     actions: {}
   };
 
   static PARTS = {
-    sheet: { template: "modules/dh-colossus/templates/colossus-links-viewer.hbs" }
+    sheet: { template: TEMPLATES.colossusLinksViewer }
   };
 
   /**

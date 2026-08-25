@@ -1,3 +1,14 @@
+# 0.0.4
+
+## Bug Fixes
+- Fixed "Open"/bring-to-front for the Colossus Sheet, Part Links Editor, Part Links Viewer, and the Token HUD dialog always opening a new window instead of reusing an already-open one. These windows computed their per-colossus id through a `get id()` override, but ApplicationV2's internal window registry never used that override — it tracks its own id set during construction — so lookups by that id silently missed. Fixed by setting the id through `_initializeApplicationOptions`, the mechanism ApplicationV2 exposes for this.
+
+## Internal
+- Added the required GPLv3 license header to every `.js` and `.css` file.
+- The `dh-colossus` CSS scoping class now comes from `MODULE_ID` instead of being repeated as a string literal in every Application's `DEFAULT_OPTIONS`.
+- Centralized all Handlebars template paths in `scripts/constants.js` (`TEMPLATES`) instead of repeating `modules/dh-colossus/templates/...` literals across files.
+- Replaced `_`-prefixed "private by convention" fields and methods with real `#private` class fields/methods (or renamed them) wherever they weren't overriding a documented ApplicationV2 lifecycle method — mainly in the Part Links Editor, the Colossus Sheet's drag-and-drop handlers, the Token HUD helpers, and Part Type Config's pending-edits state.
+
 # 0.0.3
 
 ## Improvements

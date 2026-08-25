@@ -1,4 +1,12 @@
-import { MODULE_ID, DEFAULT_PART_IDS } from "./constants.js";
+/*!
+ * Daggerheart: Colossus
+ * Copyright (c) 2026 https://github.com/brunocalado
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3.
+ */
+
+import { MODULE_ID, DEFAULT_PART_IDS, TEMPLATES } from "./constants.js";
 
 /**
  * Configuration UI for managing Colossus part types.
@@ -13,7 +21,7 @@ export class PartTypeConfig extends foundry.applications.api.HandlebarsApplicati
 
   static DEFAULT_OPTIONS = {
     id: "colossus-part-type-config",
-    classes: ["dh-colossus"],
+    classes: [MODULE_ID],
     tag: "form",
     form: { handler: PartTypeConfig.#onSubmit, submitOnChange: false, closeOnSubmit: true },
     window: { title: "Configure Part Types", icon: "fas fa-puzzle-piece" },
@@ -25,14 +33,14 @@ export class PartTypeConfig extends foundry.applications.api.HandlebarsApplicati
   };
 
   static PARTS = {
-    form: { template: "modules/dh-colossus/templates/part-type-config.hbs" }
+    form: { template: TEMPLATES.partTypeConfig }
   };
 
   /**
    * Local working copy of part types, committed to settings only on submit.
    * @type {Array<{id: string, label: string}>|null}
    */
-  _pendingTypes = null;
+  #pendingTypes = null;
 
   /* ---------------------------------------- */
   /*  Data Preparation                        */
@@ -45,13 +53,13 @@ export class PartTypeConfig extends foundry.applications.api.HandlebarsApplicati
    * @returns {Promise<object>}
    */
   async _prepareContext(partId) {
-    if (!this._pendingTypes) {
-      this._pendingTypes = foundry.utils.deepClone(
+    if (!this.#pendingTypes) {
+      this.#pendingTypes = foundry.utils.deepClone(
         game.settings.get(MODULE_ID, "partTypes")
       );
     }
     return {
-      partTypes: this._pendingTypes,
+      partTypes: this.#pendingTypes,
       defaults: PartTypeConfig.DEFAULT_IDS
     };
   }
@@ -70,7 +78,7 @@ export class PartTypeConfig extends foundry.applications.api.HandlebarsApplicati
     const input = this.element.querySelector('input[name="new-type-label"]');
     const label = input?.value?.trim();
     if (!label) return;
-    this._pendingTypes.push({ id: foundry.utils.randomID(), label });
+    this.#pendingTypes.push({ id: foundry.utils.randomID(), label });
     input.value = "";
     this.render();
   }
@@ -85,7 +93,7 @@ export class PartTypeConfig extends foundry.applications.api.HandlebarsApplicati
   static async #onRemoveType(event, target) {
     const id = target.dataset.typeId;
     if (PartTypeConfig.DEFAULT_IDS.includes(id)) return;
-    this._pendingTypes = this._pendingTypes.filter(pt => pt.id !== id);
+    this.#pendingTypes = this.#pendingTypes.filter(pt => pt.id !== id);
     this.render();
   }
 
@@ -98,11 +106,11 @@ export class PartTypeConfig extends foundry.applications.api.HandlebarsApplicati
    */
   static async #onSubmit(event, form, formData) {
     const data = formData.object;
-    for (const pt of this._pendingTypes) {
+    for (const pt of this.#pendingTypes) {
       const key = `label-${pt.id}`;
       if (key in data) pt.label = data[key];
     }
-    await game.settings.set(MODULE_ID, "partTypes", this._pendingTypes);
-    this._pendingTypes = null;
+    await game.settings.set(MODULE_ID, "partTypes", this.#pendingTypes);
+    this.#pendingTypes = null;
   }
 }

@@ -1,4 +1,12 @@
-import { MODULE_ID } from "./constants.js";
+/*!
+ * Daggerheart: Colossus
+ * Copyright (c) 2026 https://github.com/brunocalado
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3.
+ */
+
+import { MODULE_ID, TEMPLATES } from "./constants.js";
 import { ColossusLinksEditor } from "./colossus-links-editor.js";
 
 /**
@@ -14,22 +22,37 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
    * @param {object} [options={}]
    */
   constructor(colossusId, options = {}) {
-    super(options);
+    super({ ...options, colossusId });
     this.colossusId = colossusId;
-    /** @type {number} Saved scroll offset to restore after programmatic re-renders. */
-    this._savedScrollTop = 0;
   }
 
-  /** @returns {string} Unique application ID allowing multiple sheets open at once. */
-  get id() {
-    return `colossus-sheet-${this.colossusId}`;
+  /** @type {number} Saved scroll offset to restore after programmatic re-renders. */
+  #savedScrollTop = 0;
+
+  /**
+   * Gives each sheet a stable per-colossus application ID so multiple sheets can be open at
+   * once and `foundry.applications.instances.get("colossus-sheet-<id>")` can find one that's
+   * already open. ApplicationV2#id is backed by a true private field the base class populates
+   * from `options.uniqueId` during construction, so overriding the `id` getter (the previous
+   * approach here) never reaches it — the framework silently keeps its own auto-incrementing
+   * `app-N` id instead, and every lookup by our custom id misses. Per ApplicationV2#id's own
+   * doc comment, `_initializeApplicationOptions` is the supported hook for this.
+   * @param {object} options
+   * @returns {ApplicationConfiguration}
+   */
+  _initializeApplicationOptions(options) {
+    const applicationOptions = super._initializeApplicationOptions(options);
+    applicationOptions.uniqueId = applicationOptions.colossusId;
+    return applicationOptions;
   }
 
   /** Relay for preCreateToken hook: set on dragstart, cleared after token creation. */
-  static _pendingColossusId = null;
+  static pendingColossusId = null;
 
   static DEFAULT_OPTIONS = {
-    classes: ["dh-colossus", "colossus-sheet"],
+    id: "colossus-sheet-{id}",
+    colossusId: null,
+    classes: [MODULE_ID, "colossus-sheet"],
     window: { title: "Colossus", icon: "fas fa-dragon", resizable: true },
     position: { width: 800, height: 700 },
     actions: {
@@ -45,7 +68,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
   };
 
   static PARTS = {
-    sheet: { template: "modules/dh-colossus/templates/colossus-sheet.hbs" }
+    sheet: { template: TEMPLATES.colossusSheet }
   };
 
   /* ---------------------------------------- */
@@ -184,7 +207,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
    */
   #saveScroll() {
     const scroller = this.element?.querySelector(".parts-table-wrapper");
-    if (scroller) this._savedScrollTop = scroller.scrollTop;
+    if (scroller) this.#savedScrollTop = scroller.scrollTop;
   }
 
   /**
@@ -193,8 +216,8 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
    * @param {HTMLElement} scrollEl
    */
   #restoreScroll(scrollEl) {
-    if (scrollEl && this._savedScrollTop > 0) {
-      scrollEl.scrollTop = this._savedScrollTop;
+    if (scrollEl && this.#savedScrollTop > 0) {
+      scrollEl.scrollTop = this.#savedScrollTop;
     }
   }
 
@@ -275,7 +298,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
 
   /**
    * Attaches native event listeners after each render.
-   * AppV2 does not wire _onDrop or change-based select actions from DEFAULT_OPTIONS,
+   * AppV2 does not wire #onDrop or change-based select actions from DEFAULT_OPTIONS,
    * so we bind manually here. Triggered by the AppV2 _onRender lifecycle stage.
    * @param {object} context - The prepared render context.
    * @param {object} options - Render options.
@@ -286,7 +309,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
       // Only wire drop events when the zone is active (principal exists)
       if (!dropZone.classList.contains("parts-drop-zone--disabled")) {
         dropZone.addEventListener("dragover", (e) => e.preventDefault());
-        dropZone.addEventListener("drop", (e) => this._onDrop(e));
+        dropZone.addEventListener("drop", (e) => this.#onDrop(e));
       }
     }
 
@@ -304,7 +327,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
     const principalZone = this.element.querySelector(".principal-drop-zone");
     if (principalZone) {
       principalZone.addEventListener("dragover", (e) => e.preventDefault());
-      principalZone.addEventListener("drop", (e) => this._onDropPrincipal(e));
+      principalZone.addEventListener("drop", (e) => this.#onDropPrincipal(e));
     }
 
     // Drag-to-scene: populate dataTransfer so the Foundry canvas can create a token on drop.
@@ -329,7 +352,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
           })
         );
         event.dataTransfer.effectAllowed = "copy";
-        ColossusSheet._pendingColossusId = this.colossusId;
+        ColossusSheet.pendingColossusId = this.colossusId;
       });
     });
 
@@ -344,7 +367,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
    * Only GMs may drag-drop actors onto the sheet.
    * @returns {boolean}
    */
-  _canDragDrop() {
+  #canDragDrop() {
     return game.user.isGM;
   }
 
@@ -404,7 +427,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
    * adds it as a new part, and syncs its stress.max to the principal's stress.max.
    * @param {DragEvent} event
    */
-  async _onDrop(event) {
+  async #onDrop(event) {
     // Guard: parts cannot be added before a principal is set
     const colossiCheck = game.settings.get(MODULE_ID, "colossi");
     const colossusCheck = colossiCheck[this.colossusId];
@@ -480,7 +503,7 @@ export class ColossusSheet extends foundry.applications.api.HandlebarsApplicatio
    * Wired manually in _onRender via native addEventListener.
    * @param {DragEvent} event
    */
-  async _onDropPrincipal(event) {
+  async #onDropPrincipal(event) {
     let data;
     try { data = JSON.parse(event.dataTransfer.getData("text/plain")); } catch { return; }
     if (data.type !== "Actor") return;

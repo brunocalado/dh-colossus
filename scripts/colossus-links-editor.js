@@ -1,4 +1,12 @@
-import { MODULE_ID } from "./constants.js";
+/*!
+ * Daggerheart: Colossus
+ * Copyright (c) 2026 https://github.com/brunocalado
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3.
+ */
+
+import { MODULE_ID, TEMPLATES } from "./constants.js";
 import { ColossusLinksViewer } from "./colossus-links-viewer.js";
 import { buildHpPips, buildStressPips } from "./colossus-utils.js";
 
@@ -38,34 +46,54 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * @param {object} [options={}]
    */
   constructor(colossusId, options = {}) {
-    super(options);
+    super({ ...options, colossusId });
     this.colossusId = colossusId;
-    /** @type {string|null} partId being dragged, or null */
-    this._draggingPartId = null;
-    /** @type {{ x: number, y: number }} offset from node origin to mouse-down point */
-    this._draggingOffset = { x: 0, y: 0 };
-    /** @type {string|null} partId from which a new link is being drawn */
-    this._connectingFrom = null;
-    /** @type {string|null} side ("top"|"right"|"bottom"|"left") from which the connection starts */
-    this._connectingFromSide = null;
-    /** @type {Object<string, { x: number, y: number }>} live copy of node positions */
-    this._nodePositions = {};
-    /** @type {Array<{ from: string, to: string }>} live copy of links */
-    this._links = [];
   }
 
-  /** @returns {string} Unique application ID per colossus. */
-  get id() { return `colossus-links-editor-${this.colossusId}`; }
+  /** @type {string|null} partId being dragged, or null */
+  #draggingPartId = null;
+
+  /** @type {{ x: number, y: number }} offset from node origin to mouse-down point */
+  #draggingOffset = { x: 0, y: 0 };
+
+  /** @type {string|null} partId from which a new link is being drawn */
+  #connectingFrom = null;
+
+  /** @type {string|null} side ("top"|"right"|"bottom"|"left") from which the connection starts */
+  #connectingFromSide = null;
+
+  /** @type {Object<string, { x: number, y: number }>} live copy of node positions */
+  #nodePositions = {};
+
+  /** @type {Array<{ from: string, to: string }>} live copy of links */
+  #links = [];
+
+  /** @type {(() => void)|null} document-level mouseup handler that cancels an in-progress connection */
+  #cancelConnect = null;
+
+  /**
+   * Gives each editor a stable per-colossus application ID (see ColossusSheet's
+   * `_initializeApplicationOptions` for why this can't be a plain `id` getter override).
+   * @param {object} options
+   * @returns {ApplicationConfiguration}
+   */
+  _initializeApplicationOptions(options) {
+    const applicationOptions = super._initializeApplicationOptions(options);
+    applicationOptions.uniqueId = applicationOptions.colossusId;
+    return applicationOptions;
+  }
 
   static DEFAULT_OPTIONS = {
-    classes: ["dh-colossus", "colossus-links", "colossus-links-editor"],
+    id: "colossus-links-editor-{id}",
+    colossusId: null,
+    classes: [MODULE_ID, "colossus-links", "colossus-links-editor"],
     window: { title: "Part Links", icon: "fas fa-project-diagram", resizable: true },
     position: { width: 900, height: 650 },
     actions: {}
   };
 
   static PARTS = {
-    sheet: { template: "modules/dh-colossus/templates/colossus-links-editor.hbs" }
+    sheet: { template: TEMPLATES.colossusLinksEditor }
   };
 
   /* ------------------------------------------------------------------ */
@@ -82,14 +110,14 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
     const data = colossi[this.colossusId];
     if (!data) return { nodes: [], backgroundImage: "" };
 
-    this._nodePositions = foundry.utils.deepClone(data.nodePositions ?? {});
-    this._links = foundry.utils.deepClone(data.links ?? []);
+    this.#nodePositions = foundry.utils.deepClone(data.nodePositions ?? {});
+    this.#links = foundry.utils.deepClone(data.links ?? []);
 
     const nodes = (data.parts ?? [])
       .map(part => {
         const actor = fromUuidSync(part.actorUuid);
         if (!actor) return null;
-        const pos = this._nodePositions[part.partId];
+        const pos = this.#nodePositions[part.partId];
         return {
           partId: part.partId,
           actorImg: actor.img ?? "icons/svg/mystery-man.svg",
@@ -104,17 +132,17 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
 
     // --- Main Actor node ---
     // The principal actor is tracked in colossus data but not part of the parts array.
-    // It gets a reserved __main__ key in _nodePositions so it can be dragged and persisted.
+    // It gets a reserved __main__ key in #nodePositions so it can be dragged and persisted.
     let mainActorNode = null;
     if (data.principalActorUuid) {
       const mainActor = fromUuidSync(data.principalActorUuid);
       if (mainActor) {
         const MAIN_ACTOR_KEY = "__main__";
-        if (!this._nodePositions[MAIN_ACTOR_KEY]) {
+        if (!this.#nodePositions[MAIN_ACTOR_KEY]) {
           // Default position: top-right corner; JS will snap after SVG dimensions are known
-          this._nodePositions[MAIN_ACTOR_KEY] = { x: 780, y: 20 };
+          this.#nodePositions[MAIN_ACTOR_KEY] = { x: 780, y: 20 };
         }
-        const pos = this._nodePositions[MAIN_ACTOR_KEY];
+        const pos = this.#nodePositions[MAIN_ACTOR_KEY];
         mainActorNode = {
           partId: MAIN_ACTOR_KEY,
           actorImg: mainActor.img ?? "icons/svg/mystery-man.svg",
@@ -152,49 +180,49 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
 
     // Defer SVG sizing until after browser paint to avoid 0-dimension reads
     requestAnimationFrame(() => {
-      this._fitSvg(svg);
-      this._redrawLinks(svg);
-      this._fitBackgroundImage(svg);
+      this.#fitSvg(svg);
+      this.#redrawLinks(svg);
+      this.#fitBackgroundImage(svg);
     });
 
     // Node drag
     svg.querySelectorAll(".node").forEach(node => {
-      node.addEventListener("mousedown", (e) => this._onNodeMouseDown(e, svg));
+      node.addEventListener("mousedown", (e) => this.#onNodeMouseDown(e, svg));
     });
 
     // Anchor click (start connection)
     svg.querySelectorAll(".link-anchor").forEach(anchor => {
       anchor.addEventListener("mousedown", (e) => {
         e.stopPropagation();
-        this._onAnchorMouseDown(e, svg);
+        this.#onAnchorMouseDown(e, svg);
       });
     });
 
     // SVG-level mousemove / mouseup
-    svg.addEventListener("mousemove", (e) => this._onSvgMouseMove(e, svg));
-    svg.addEventListener("mouseup", (e) => this._onSvgMouseUp(e, svg));
+    svg.addEventListener("mousemove", (e) => this.#onSvgMouseMove(e, svg));
+    svg.addEventListener("mouseup", (e) => this.#onSvgMouseUp(e, svg));
 
     // Document-level mouseup to cancel connections started but released outside SVG
-    if (this._cancelConnect) document.removeEventListener("mouseup", this._cancelConnect);
-    this._cancelConnect = () => {
-      if (!this._connectingFrom) return;
+    if (this.#cancelConnect) document.removeEventListener("mouseup", this.#cancelConnect);
+    this.#cancelConnect = () => {
+      if (!this.#connectingFrom) return;
       const tempLine = svg.querySelector("#temp-link-line");
       if (tempLine) tempLine.style.display = "none";
       svg.classList.remove("is-connecting");
-      this._connectingFrom     = null;
-      this._connectingFromSide = null;
+      this.#connectingFrom     = null;
+      this.#connectingFromSide = null;
     };
-    document.addEventListener("mouseup", this._cancelConnect);
+    document.addEventListener("mouseup", this.#cancelConnect);
 
     // Toolbar buttons
     this.element.querySelector(".links-btn-config")
-      ?.addEventListener("click", () => this._onConfigBackground());
+      ?.addEventListener("click", () => this.#onConfigBackground());
 
     this.element.querySelector(".links-btn-auto-layout")
-      ?.addEventListener("click", () => this._onAutoLayout(svg));
+      ?.addEventListener("click", () => this.#onAutoLayout(svg));
 
     this.element.querySelector(".links-btn-show-players")
-      ?.addEventListener("click", () => this._onShowPlayers());
+      ?.addEventListener("click", () => this.#onShowPlayers());
   }
 
   /* ------------------------------------------------------------------ */
@@ -209,7 +237,7 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * @param {number} clientY
    * @returns {{ x: number, y: number }}
    */
-  _toSvgCoords(svg, clientX, clientY) {
+  #toSvgCoords(svg, clientX, clientY) {
     const pt = svg.createSVGPoint();
     pt.x = clientX;
     pt.y = clientY;
@@ -221,7 +249,7 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * Stretches the SVG to fill its wrapper div, accounting for toolbar height.
    * @param {SVGSVGElement} svg
    */
-  _fitSvg(svg) {
+  #fitSvg(svg) {
     const wrapper = svg.closest(".links-editor-wrapper");
     if (!wrapper) return;
     const rect = wrapper.getBoundingClientRect();
@@ -236,7 +264,7 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * Stretches the background <image> to fill the SVG viewBox.
    * @param {SVGSVGElement} svg
    */
-  _fitBackgroundImage(svg) {
+  #fitBackgroundImage(svg) {
     const img = svg.querySelector(".links-bg-image");
     if (!img) return;
     img.setAttribute("width", svg.getAttribute("width") ?? "100%");
@@ -245,17 +273,17 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
 
   /**
    * Clears and redraws all persisted connection lines.
-   * Called after any change to this._links or this._nodePositions.
+   * Called after any change to this.#links or this.#nodePositions.
    * @param {SVGSVGElement} svg
    */
-  _redrawLinks(svg) {
+  #redrawLinks(svg) {
     const layer = svg.querySelector(".links-layer");
     if (!layer) return;
     layer.innerHTML = "";
 
-    for (const link of this._links) {
-      const fromPos = this._nodePositions[link.from];
-      const toPos   = this._nodePositions[link.to];
+    for (const link of this.#links) {
+      const fromPos = this.#nodePositions[link.from];
+      const toPos   = this.#nodePositions[link.to];
       if (!fromPos || !toPos) continue;
 
       const p1 = anchorPoint(fromPos, link.fromSide ?? "right");
@@ -273,7 +301,7 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
       line.dataset.toSide   = link.toSide   ?? "left";
       line.addEventListener("contextmenu", (e) => {
         e.preventDefault();
-        this._removeLink(link.from, link.fromSide, link.to, link.toSide, svg);
+        this.#removeLink(link.from, link.fromSide, link.to, link.toSide, svg);
       });
       layer.appendChild(line);
     }
@@ -284,8 +312,8 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * @param {SVGSVGElement} svg
    * @param {string} partId
    */
-  _updateLinesForNode(svg, partId) {
-    const pos = this._nodePositions[partId];
+  #updateLinesForNode(svg, partId) {
+    const pos = this.#nodePositions[partId];
     if (!pos) return;
 
     svg.querySelectorAll(`.part-link[data-from="${partId}"]`).forEach(line => {
@@ -312,15 +340,15 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * @param {MouseEvent} e
    * @param {SVGSVGElement} svg
    */
-  _onNodeMouseDown(e, svg) {
+  #onNodeMouseDown(e, svg) {
     if (e.button !== 0) return;
-    if (this._connectingFrom) return;
+    if (this.#connectingFrom) return;
     const node = e.currentTarget;
     const partId = node.dataset.partId;
-    const svgPos = this._toSvgCoords(svg, e.clientX, e.clientY);
-    const nodePos = this._nodePositions[partId] ?? { x: 0, y: 0 };
-    this._draggingPartId = partId;
-    this._draggingOffset = { x: svgPos.x - nodePos.x, y: svgPos.y - nodePos.y };
+    const svgPos = this.#toSvgCoords(svg, e.clientX, e.clientY);
+    const nodePos = this.#nodePositions[partId] ?? { x: 0, y: 0 };
+    this.#draggingPartId = partId;
+    this.#draggingOffset = { x: svgPos.x - nodePos.x, y: svgPos.y - nodePos.y };
     e.preventDefault();
   }
 
@@ -333,17 +361,17 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * @param {MouseEvent} e
    * @param {SVGSVGElement} svg
    */
-  _onAnchorMouseDown(e, svg) {
+  #onAnchorMouseDown(e, svg) {
     if (e.button !== 0) return;
     const anchor = e.currentTarget;
-    this._connectingFrom     = anchor.dataset.partId;
-    this._connectingFromSide = anchor.dataset.side ?? "right";
+    this.#connectingFrom     = anchor.dataset.partId;
+    this.#connectingFromSide = anchor.dataset.side ?? "right";
 
-    const fromPos  = this._nodePositions[this._connectingFrom];
+    const fromPos  = this.#nodePositions[this.#connectingFrom];
     const tempLine = svg.querySelector("#temp-link-line");
     if (!fromPos || !tempLine) return;
 
-    const origin = anchorPoint(fromPos, this._connectingFromSide);
+    const origin = anchorPoint(fromPos, this.#connectingFromSide);
     tempLine.setAttribute("x1", origin.x);
     tempLine.setAttribute("y1", origin.y);
     tempLine.setAttribute("x2", origin.x);
@@ -364,21 +392,21 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * @param {MouseEvent} e
    * @param {SVGSVGElement} svg
    */
-  _onSvgMouseMove(e, svg) {
-    const svgPos = this._toSvgCoords(svg, e.clientX, e.clientY);
+  #onSvgMouseMove(e, svg) {
+    const svgPos = this.#toSvgCoords(svg, e.clientX, e.clientY);
 
     // Node dragging
-    if (this._draggingPartId) {
-      const newX = svgPos.x - this._draggingOffset.x;
-      const newY = svgPos.y - this._draggingOffset.y;
-      this._nodePositions[this._draggingPartId] = { x: newX, y: newY };
-      const node = svg.querySelector(`.node[data-part-id="${this._draggingPartId}"]`);
+    if (this.#draggingPartId) {
+      const newX = svgPos.x - this.#draggingOffset.x;
+      const newY = svgPos.y - this.#draggingOffset.y;
+      this.#nodePositions[this.#draggingPartId] = { x: newX, y: newY };
+      const node = svg.querySelector(`.node[data-part-id="${this.#draggingPartId}"]`);
       if (node) node.setAttribute("transform", `translate(${newX},${newY})`);
-      this._updateLinesForNode(svg, this._draggingPartId);
+      this.#updateLinesForNode(svg, this.#draggingPartId);
     }
 
     // Connection drawing
-    if (this._connectingFrom) {
+    if (this.#connectingFrom) {
       const tempLine = svg.querySelector("#temp-link-line");
       if (tempLine) {
         tempLine.setAttribute("x2", svgPos.x);
@@ -392,48 +420,48 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * @param {MouseEvent} e
    * @param {SVGSVGElement} svg
    */
-  _onSvgMouseUp(e, svg) {
+  #onSvgMouseUp(e, svg) {
     // Finish node drag — persist positions
-    if (this._draggingPartId) {
-      this._draggingPartId = null;
-      this._persistLayout();
+    if (this.#draggingPartId) {
+      this.#draggingPartId = null;
+      this.#persistLayout();
     }
 
     // Finish connection drawing
-    if (this._connectingFrom) {
+    if (this.#connectingFrom) {
       const target   = document.elementFromPoint(e.clientX, e.clientY);
       const anchor   = target?.closest(".link-anchor");
       const toPartId = anchor?.dataset.partId;
       const toSide   = anchor?.dataset.side ?? "left";
 
-      if (toPartId && toPartId !== this._connectingFrom) {
+      if (toPartId && toPartId !== this.#connectingFrom) {
         // Prevent any link involving the main actor node — it has no anchors by design
-        if (toPartId === "__main__" || this._connectingFrom === "__main__") return;
+        if (toPartId === "__main__" || this.#connectingFrom === "__main__") return;
 
         // Allow multiple links between the same pair IF they use different side combinations
-        const exists = this._links.some(
-          l => (l.from === this._connectingFrom && l.fromSide === this._connectingFromSide &&
+        const exists = this.#links.some(
+          l => (l.from === this.#connectingFrom && l.fromSide === this.#connectingFromSide &&
                 l.to   === toPartId            && l.toSide   === toSide) ||
                (l.from === toPartId            && l.fromSide === toSide &&
-                l.to   === this._connectingFrom && l.toSide  === this._connectingFromSide)
+                l.to   === this.#connectingFrom && l.toSide  === this.#connectingFromSide)
         );
         if (!exists) {
-          this._links.push({
-            from:     this._connectingFrom,
-            fromSide: this._connectingFromSide,
+          this.#links.push({
+            from:     this.#connectingFrom,
+            fromSide: this.#connectingFromSide,
             to:       toPartId,
             toSide:   toSide
           });
-          this._redrawLinks(svg);
-          this._persistLayout();
+          this.#redrawLinks(svg);
+          this.#persistLayout();
         }
       }
 
       const tempLine = svg.querySelector("#temp-link-line");
       if (tempLine) tempLine.style.display = "none";
       svg.classList.remove("is-connecting");
-      this._connectingFrom     = null;
-      this._connectingFromSide = null;
+      this.#connectingFrom     = null;
+      this.#connectingFromSide = null;
     }
   }
 
@@ -449,15 +477,15 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * @param {string} toSide
    * @param {SVGSVGElement} svg
    */
-  _removeLink(fromId, fromSide, toId, toSide, svg) {
-    this._links = this._links.filter(l =>
+  #removeLink(fromId, fromSide, toId, toSide, svg) {
+    this.#links = this.#links.filter(l =>
       !(l.from === fromId && l.fromSide === fromSide &&
         l.to   === toId   && l.toSide   === toSide) &&
       !(l.from === toId   && l.fromSide === toSide &&
         l.to   === fromId && l.toSide   === fromSide)
     );
-    this._redrawLinks(svg);
-    this._persistLayout();
+    this.#redrawLinks(svg);
+    this.#persistLayout();
   }
 
   /* ------------------------------------------------------------------ */
@@ -469,16 +497,16 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * Capped at 6 columns. Overwrites existing positions.
    * @param {SVGSVGElement} svg
    */
-  _onAutoLayout(svg) {
+  #onAutoLayout(svg) {
     const colossi = game.settings.get(MODULE_ID, "colossi");
     const parts = colossi[this.colossusId]?.parts ?? [];
     const cols = Math.min(6, Math.ceil(Math.sqrt(parts.length)));
     parts.forEach((part, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
-      this._nodePositions[part.partId] = { x: 40 + col * 130, y: 40 + row * 130 };
+      this.#nodePositions[part.partId] = { x: 40 + col * 130, y: 40 + row * 130 };
     });
-    this._persistLayout().then(() => this.render());
+    this.#persistLayout().then(() => this.render());
   }
 
   /* ------------------------------------------------------------------ */
@@ -489,7 +517,7 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * Opens a FilePicker for the GM to select a background image for the SVG canvas.
    * Uses the v13 namespaced API: foundry.applications.apps.FilePicker.
    */
-  _onConfigBackground() {
+  #onConfigBackground() {
     const FilePickerClass = foundry.applications.apps.FilePicker.implementation ?? foundry.applications.apps.FilePicker;
     new FilePickerClass({
       type: "image",
@@ -515,7 +543,7 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * The GM's own client does NOT open the viewer — the editor remains the GM's view.
    * The socket listener in main.js already filters out GM clients with `if (game.user.isGM) return`.
    */
-  _onShowPlayers() {
+  #onShowPlayers() {
     const colossi = game.settings.get(MODULE_ID, "colossi");
     const data = colossi[this.colossusId];
     if (!data) return;
@@ -536,9 +564,9 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * @param {object} options
    */
   _onClose(options) {
-    if (this._cancelConnect) {
-      document.removeEventListener("mouseup", this._cancelConnect);
-      this._cancelConnect = null;
+    if (this.#cancelConnect) {
+      document.removeEventListener("mouseup", this.#cancelConnect);
+      this.#cancelConnect = null;
     }
     super._onClose(options);
   }
@@ -551,12 +579,12 @@ export class ColossusLinksEditor extends foundry.applications.api.HandlebarsAppl
    * Writes the current nodePositions and links to the colossi world setting.
    * @returns {Promise<void>}
    */
-  async _persistLayout() {
+  async #persistLayout() {
     const colossi = game.settings.get(MODULE_ID, "colossi");
     const c = colossi[this.colossusId];
     if (!c) return;
-    c.nodePositions = foundry.utils.deepClone(this._nodePositions);
-    c.links = foundry.utils.deepClone(this._links);
+    c.nodePositions = foundry.utils.deepClone(this.#nodePositions);
+    c.links = foundry.utils.deepClone(this.#links);
     await game.settings.set(MODULE_ID, "colossi", colossi);
   }
 

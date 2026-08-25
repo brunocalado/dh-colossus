@@ -1,4 +1,12 @@
-import { MODULE_ID, DEFAULT_PART_TYPES } from "./constants.js";
+/*!
+ * Daggerheart: Colossus
+ * Copyright (c) 2026 https://github.com/brunocalado
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3.
+ */
+
+import { MODULE_ID, DEFAULT_PART_TYPES, TEMPLATES } from "./constants.js";
 import { PartTypeConfig } from "./part-type-config.js";
 import { ColossusManager } from "./colossus-manager.js";
 import { ColossusSheet } from "./colossus-sheet.js";
@@ -7,7 +15,7 @@ import { ColossusLinksViewer } from "./colossus-links-viewer.js";
 import { ColossusHud } from "./colossus-hud.js";
 
 // Prevents re-entrant stress sync loops when propagating stress.value changes.
-let _syncingStress = false;
+let syncingStress = false;
 
 /* ---------------------------------------- */
 /*  Colossus Group Placement                */
@@ -26,7 +34,7 @@ let _syncingStress = false;
  * @param {number} dropY - Canvas Y coordinate where the user dropped.
  * @returns {Promise<void>}
  */
-async function _placeColossusGroup(colossusId, dropX, dropY) {
+async function placeColossusGroup(colossusId, dropX, dropY) {
   const colossi = game.settings.get(MODULE_ID, "colossi");
   const colossus = colossi[colossusId];
   if (!colossus) return;
@@ -104,7 +112,7 @@ async function _placeColossusGroup(colossusId, dropX, dropY) {
  * @param {string} actorUuid
  * @returns {{ colossusId: string, colossus: object } | null}
  */
-function _findColossusForActor(actorUuid) {
+function findColossusForActor(actorUuid) {
   const colossi = game.settings.get(MODULE_ID, "colossi");
   for (const [colossusId, colossus] of Object.entries(colossi)) {
     if (colossus.principalActorUuid === actorUuid) return { colossusId, colossus };
@@ -117,7 +125,7 @@ function _findColossusForActor(actorUuid) {
  * Propagates a stress.value change from one colossus actor to all sibling actors
  * (principal + all parts) in the same colossus group.
  *
- * Uses _syncingStress to break the re-entrant updateActor loop that would otherwise
+ * Uses syncingStress to break the re-entrant updateActor loop that would otherwise
  * fire again when we call actor.update() on each sibling.
  *
  * Actors are linked, so actorDoc.token is null — we identify the group by UUID
@@ -127,8 +135,8 @@ function _findColossusForActor(actorUuid) {
  * @param {number} newStressValue - The new stress.value to propagate.
  * @returns {Promise<void>}
  */
-async function _syncStressToColossus(actorDoc, newStressValue) {
-  const match = _findColossusForActor(actorDoc.uuid);
+async function syncStressToColossus(actorDoc, newStressValue) {
+  const match = findColossusForActor(actorDoc.uuid);
   if (!match) return;
 
   const { colossus } = match;
@@ -144,7 +152,7 @@ async function _syncStressToColossus(actorDoc, newStressValue) {
 
   if (!siblingUuids.length) return;
 
-  _syncingStress = true;
+  syncingStress = true;
   try {
     const updates = siblingUuids.map(uuid => {
       const sibling = fromUuidSync(uuid);
@@ -153,7 +161,7 @@ async function _syncStressToColossus(actorDoc, newStressValue) {
     }).filter(Boolean);
     await Promise.all(updates);
   } finally {
-    _syncingStress = false;
+    syncingStress = false;
   }
 }
 
@@ -216,7 +224,7 @@ Hooks.once("init", () => {
 Hooks.once("ready", async () => {
   // Preload HUD dialog template (mirrors dh-horde pattern)
   await foundry.applications.handlebars.loadTemplates([
-    "modules/dh-colossus/templates/colossus-hud-dialog.hbs"
+    TEMPLATES.colossusHudDialog
   ]);
 
   // Inject Colossus button into Token HUD (GM only) and player inspect icon
@@ -250,10 +258,10 @@ Hooks.once("ready", async () => {
    */
   Hooks.on("updateActor", (actor, diff) => {
     // Propagate stress.value to all siblings in the same colossus (GM only, no re-entrancy)
-    if (game.user.isGM && !_syncingStress) {
+    if (game.user.isGM && !syncingStress) {
       const newStress = diff?.system?.resources?.stress?.value;
       if (newStress !== undefined) {
-        _syncStressToColossus(actor, newStress);
+        syncStressToColossus(actor, newStress);
       }
     }
 
@@ -275,7 +283,7 @@ Hooks.once("ready", async () => {
   /**
    * Intercepts canvas drops that carry the _isColossusGroup marker.
    * Cancels Foundry's default single-token creation and places the full colossus
-   * group via _placeColossusGroup. Returning false stops all further hook processing.
+   * group via placeColossusGroup. Returning false stops all further hook processing.
    * Only the GM can place tokens, matching Foundry's native drag-drop restriction.
    * Triggered by the dropCanvasData hook on every canvas drop event.
    */
@@ -285,7 +293,7 @@ Hooks.once("ready", async () => {
     if (!data._isColossusGroup || !data._colossusId) return true;
 
     // data.x / data.y are the canvas pixel coordinates of the drop point in v13
-    _placeColossusGroup(data._colossusId, data.x, data.y);
+    placeColossusGroup(data._colossusId, data.x, data.y);
 
     // Return false to cancel Foundry's default single-token creation
     return false;
@@ -293,15 +301,15 @@ Hooks.once("ready", async () => {
 
   /**
    * Stamps a dh-colossus.colossusId flag on any token being created via the
-   * ColossusSheet drag-to-scene button. _pendingColossusId is set on dragstart
+   * ColossusSheet drag-to-scene button. pendingColossusId is set on dragstart
    * and cleared immediately here to avoid contaminating subsequent drops.
    * Triggered by the preCreateToken hook before token persistence.
    */
   Hooks.on("preCreateToken", (tokenDoc, _data, _options, _userId) => {
-    const colossusId = ColossusSheet._pendingColossusId;
+    const colossusId = ColossusSheet.pendingColossusId;
     if (!colossusId) return;
     tokenDoc.updateSource({ [`flags.${MODULE_ID}.colossusId`]: colossusId });
-    ColossusSheet._pendingColossusId = null;
+    ColossusSheet.pendingColossusId = null;
   });
 
   // Socket: receive showLinks broadcast from GM → open viewer on player clients

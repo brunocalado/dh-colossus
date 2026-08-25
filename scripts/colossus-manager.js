@@ -1,4 +1,12 @@
-import { MODULE_ID } from "./constants.js";
+/*!
+ * Daggerheart: Colossus
+ * Copyright (c) 2026 https://github.com/brunocalado
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3.
+ */
+
+import { MODULE_ID, TEMPLATES } from "./constants.js";
 import { ColossusSheet } from "./colossus-sheet.js";
 
 /**
@@ -11,7 +19,7 @@ export class ColossusManager extends foundry.applications.api.HandlebarsApplicat
 ) {
   static DEFAULT_OPTIONS = {
     id: "colossus-manager",
-    classes: ["dh-colossus"],
+    classes: [MODULE_ID],
     window: { title: "Colossus Manager", icon: "fas fa-dragon" },
     position: { width: 420, height: 500 },
     actions: {
@@ -23,7 +31,7 @@ export class ColossusManager extends foundry.applications.api.HandlebarsApplicat
   };
 
   static PARTS = {
-    list: { template: "modules/dh-colossus/templates/colossus-manager.hbs" }
+    list: { template: TEMPLATES.colossusManager }
   };
 
   /* ---------------------------------------- */

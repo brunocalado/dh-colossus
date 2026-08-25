@@ -1,4 +1,12 @@
-import { MODULE_ID } from "./constants.js";
+/*!
+ * Daggerheart: Colossus
+ * Copyright (c) 2026 https://github.com/brunocalado
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3.
+ */
+
+import { MODULE_ID, TEMPLATES } from "./constants.js";
 import { ColossusSheet } from "./colossus-sheet.js";
 import { ColossusLinksEditor } from "./colossus-links-editor.js";
 import { ColossusLinksViewer } from "./colossus-links-viewer.js";
@@ -11,7 +19,9 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 class ColossusHudDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   static DEFAULT_OPTIONS = {
-    classes: ["dh-colossus", "dh-colossus-hud-app"],
+    id: "dh-colossus-hud-dialog-{id}",
+    colossusId: null,
+    classes: [MODULE_ID, "dh-colossus-hud-app"],
     window: { title: "Colossus Actions" },
     position: { width: 260 },
     actions: {
@@ -21,20 +31,27 @@ class ColossusHudDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   };
 
   static PARTS = {
-    main: { template: "modules/dh-colossus/templates/colossus-hud-dialog.hbs" }
+    main: { template: TEMPLATES.colossusHudDialog }
   };
 
   /**
    * @param {string} colossusId - The colossus world-setting ID.
    */
   constructor(colossusId) {
-    super();
+    super({ colossusId });
     this.colossusId = colossusId;
   }
 
-  /** @returns {string} Unique per-colossus application ID. */
-  get id() {
-    return `dh-colossus-hud-dialog-${this.colossusId}`;
+  /**
+   * Gives each dialog a stable per-colossus application ID (see ColossusSheet's
+   * `_initializeApplicationOptions` for why this can't be a plain `id` getter override).
+   * @param {object} options
+   * @returns {ApplicationConfiguration}
+   */
+  _initializeApplicationOptions(options) {
+    const applicationOptions = super._initializeApplicationOptions(options);
+    applicationOptions.uniqueId = applicationOptions.colossusId;
+    return applicationOptions;
   }
 
   /**
@@ -89,20 +106,20 @@ export class ColossusHud {
   static init() {
     Hooks.on("renderTokenHUD", (app, html) => {
       if (!game.user.isGM) return;
-      ColossusHud._injectHUDButton(app, html);
+      ColossusHud.#injectHUDButton(app, html);
     });
   }
 
   /**
    * Injects a Colossus dragon button into the left HUD column for any
    * token carrying a valid dh-colossus.colossusId flag.
-   * Mirrors the pattern used in dh-horde HordeHud._injectHUDButton().
+   * Mirrors the pattern used in dh-horde HordeHud's own HUD-button injection.
    *
    * Triggered by the renderTokenHUD hook registered in ColossusHud.init().
    * @param {TokenHUD} app
    * @param {HTMLElement|jQuery} html
    */
-  static _injectHUDButton(app, html) {
+  static #injectHUDButton(app, html) {
     const root = html;
     if (!root) return;
 
@@ -146,8 +163,8 @@ export class ColossusHud {
    * Call from main.js alongside ColossusHud.init().
    */
   static initPlayerIcon() {
-    Hooks.on("refreshToken", (token) => ColossusHud._refreshInspectIcon(token));
-    Hooks.on("deleteToken", (tokenDoc) => ColossusHud._removeInspectIcon(tokenDoc.id));
+    Hooks.on("refreshToken", (token) => ColossusHud.#refreshInspectIcon(token));
+    Hooks.on("deleteToken", (tokenDoc) => ColossusHud.#removeInspectIcon(tokenDoc.id));
   }
 
   /**
@@ -157,7 +174,7 @@ export class ColossusHud {
    * Triggered by the refreshToken hook registered in ColossusHud.initPlayerIcon().
    * @param {Token} token - The PIXI Token object being refreshed.
    */
-  static _refreshInspectIcon(token) {
+  static #refreshInspectIcon(token) {
     if (game.user.isGM) return;
     if (!canvas.tokens) return;
 
@@ -173,7 +190,7 @@ export class ColossusHud {
     // Create the icon once; subsequent refreshes only reposition it
     let icon = existing;
     if (!icon) {
-      icon = ColossusHud._createInspectIcon(colossusId, token.id);
+      icon = ColossusHud.#createInspectIcon(colossusId, token.id);
       canvas.tokens.addChild(icon);
     }
 
@@ -187,7 +204,7 @@ export class ColossusHud {
    * Triggered by the deleteToken hook registered in ColossusHud.initPlayerIcon().
    * @param {string} tokenId - The ID of the deleted token document.
    */
-  static _removeInspectIcon(tokenId) {
+  static #removeInspectIcon(tokenId) {
     if (!canvas.tokens) return;
     const icon = canvas.tokens.children?.find(c => c.__colossusToken === tokenId);
     if (icon) canvas.tokens.removeChild(icon);
@@ -195,13 +212,13 @@ export class ColossusHud {
 
   /**
    * Builds the PIXI.Graphics magnifier icon and wires its click handler.
-   * Separated from _refreshInspectIcon so the graphics object is created only once
+   * Separated from #refreshInspectIcon so the graphics object is created only once
    * per token lifetime rather than on every refresh cycle.
    * @param {string} colossusId - The colossus world-setting ID.
    * @param {string} tokenId - The token document ID this icon belongs to.
    * @returns {PIXI.Graphics}
    */
-  static _createInspectIcon(colossusId, tokenId) {
+  static #createInspectIcon(colossusId, tokenId) {
     const R = 14;
     const g = new PIXI.Graphics();
     g.__colossusInspect = true;

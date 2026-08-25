@@ -1,15 +1,13 @@
 {
   "id": "dh-colossus",
   "title": "Daggerheart: Colossus",
-  "version": "0.0.3",
-  
+  "version": "0.0.4",
   "description": "Manage Colossus encounters — multi-part boss creatures with independent HP per part, shared stress, and a visual part map you can show your players.",
-  
   "compatibility": {
     "minimum": "14",
-    "verified": "14"
+    "verified": "14",
+    "maximum": "14"
   },
-  
   "authors": [
     {
       "name": "Mestre Digital",
@@ -17,14 +15,14 @@
       "flags": {}
     }
   ],
-  
   "esmodules": [
     "scripts/main.js"
   ],
   "styles": [
-    "styles/module.css"
+    {
+      "src": "styles/module.css"
+    }
   ],
-  
   "media": [
     {
       "type": "setup",
@@ -34,7 +32,6 @@
       "flags": {}
     }
   ],
-  
   "relationships": {
     "systems": [
       {
@@ -48,5 +45,6 @@
   },
   "url": "https://github.com/brunocalado/dh-colossus",
   "manifest": "https://raw.githubusercontent.com/brunocalado/dh-colossus/main/module.json",
-  "download": "https://codeload.github.com/brunocalado/dh-colossus/zip/main"
+  "download": "https://codeload.github.com/brunocalado/dh-colossus/zip/main",
+  "flags": {}
 }

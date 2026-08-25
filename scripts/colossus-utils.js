@@ -1,3 +1,11 @@
+/*!
+ * Daggerheart: Colossus
+ * Copyright (c) 2026 https://github.com/brunocalado
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3.
+ */
+
 /**
  * Builds an array of pip render data for a node's HP bar.
  * The bar occupies x=[2..78] at y=2, height=5, inside an 80px-wide node.
